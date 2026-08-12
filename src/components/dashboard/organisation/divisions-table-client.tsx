@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable, StatusBadge, type DataTableAction } from "@/components/dashboard/data-table";
-import { deleteDivision } from "@/server/actions/division";
+import { deleteDivision } from "@/server/actions/organisation";
 
 export type DivisionRow = {
   id: string;
@@ -14,9 +14,9 @@ export type DivisionRow = {
   circleName: string;
   regionId: string;
   regionName: string;
-  forestType: string | null;
+  headquarters: string | null;
+  officerName: string | null;
   status: string;
-  orderIndex: number;
 };
 
 const columns: ColumnDef<DivisionRow, unknown>[] = [
@@ -24,16 +24,20 @@ const columns: ColumnDef<DivisionRow, unknown>[] = [
   { accessorKey: "circleName", header: "Circle" },
   { accessorKey: "regionName", header: "Region" },
   {
-    accessorKey: "forestType",
-    header: "Forest type",
-    cell: ({ row }) => row.original.forestType ?? "—",
+    accessorKey: "headquarters",
+    header: "HQ",
+    cell: ({ row }) => row.original.headquarters ?? "—",
+  },
+  {
+    accessorKey: "officerName",
+    header: "DFO",
+    cell: ({ row }) => row.original.officerName ?? "—",
   },
   {
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => <StatusBadge status={row.original.status} />,
   },
-  { accessorKey: "orderIndex", header: "Order" },
 ];
 
 type Props = {
@@ -122,7 +126,7 @@ export function DivisionsTableClient({ rows, regions, circles }: Props) {
         data={filtered}
         getRowId={(row) => row.id}
         actions={actions}
-        searchPlaceholder="Filter divisions…"
+        searchPlaceholder="Search divisions…"
       />
     </div>
   );

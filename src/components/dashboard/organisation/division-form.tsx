@@ -4,8 +4,8 @@ import { useRouter } from "next/navigation";
 import { PublishStatus } from "@prisma/client";
 import { ResourceForm, type FieldDescriptor } from "@/components/dashboard/resource-form";
 import { ImagePicker } from "@/components/dashboard/image-picker";
-import { divisionSchema, type DivisionInput } from "@/lib/validators/org";
-import { createDivision, updateDivision } from "@/server/actions/division";
+import { divisionSchema, type DivisionInput } from "@/lib/validators/organisation";
+import { createDivision, updateDivision } from "@/server/actions/organisation";
 import type { ActionResult } from "@/server/actions/types";
 
 const STATUS_OPTIONS = Object.values(PublishStatus).map((s) => ({ label: s, value: s }));
@@ -33,7 +33,12 @@ export function DivisionForm({ mode, divisionId, defaults, circles }: Props) {
     },
     { name: "name", label: "Name", tab: "en" },
     { name: "nameUr", label: "Name (Urdu)", tab: "ur" },
-    { name: "slug", label: "Slug", tab: "all" },
+    {
+      name: "slug",
+      label: "Slug",
+      tab: "all",
+      description: "Unique within the parent circle. Auto-generated from name.",
+    },
     { name: "headquarters", label: "Headquarters", tab: "all" },
     { name: "forestType", label: "Forest type", tab: "en" },
     { name: "shortDesc", label: "Short description", type: "textarea", tab: "en", rows: 2 },
@@ -50,7 +55,7 @@ export function DivisionForm({ mode, divisionId, defaults, circles }: Props) {
         />
       ),
     },
-    { name: "officerName", label: "Officer name", tab: "en" },
+    { name: "officerName", label: "DFO / officer name", tab: "en" },
     { name: "officerDesignation", label: "Officer designation", tab: "en" },
     {
       name: "officerPhoto",
@@ -76,7 +81,7 @@ export function DivisionForm({ mode, divisionId, defaults, circles }: Props) {
       type: "json",
       tab: "all",
       rows: 8,
-      description: "Paste a Feature or FeatureCollection JSON string.",
+      description: "Paste a Feature or FeatureCollection. Invalid JSON blocks save.",
     },
     {
       name: "status",
@@ -94,6 +99,7 @@ export function DivisionForm({ mode, divisionId, defaults, circles }: Props) {
       fields={fields}
       defaultValues={defaults}
       showLanguageTabs
+      autoSlug={mode === "create"}
       submitLabel={mode === "create" ? "Create division" : "Save division"}
       onSubmit={async (values): Promise<ActionResult> => {
         const result =

@@ -2,15 +2,15 @@ import Link from "next/link";
 import { PublishStatus, Role } from "@prisma/client";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { regionScopeWhere } from "@/lib/org-scope";
+import { regionWhere } from "@/lib/org-scope";
 import { CircleForm } from "@/components/dashboard/organisation/circle-form";
-import type { CircleInput } from "@/lib/validators/org";
+import type { CircleInput } from "@/lib/validators/organisation";
 
 export default async function NewCirclePage() {
   const session = await requireRole(Role.SUPER_ADMIN, Role.REGION_ADMIN);
 
   const regions = await prisma.region.findMany({
-    where: regionScopeWhere(session.user),
+    where: regionWhere(session),
     orderBy: { orderIndex: "asc" },
     select: { id: true, name: true },
   });

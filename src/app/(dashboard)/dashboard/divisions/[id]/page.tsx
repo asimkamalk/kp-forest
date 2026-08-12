@@ -3,9 +3,9 @@ import Link from "next/link";
 import { Role } from "@prisma/client";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { circleScopeWhere, divisionScopeWhere } from "@/lib/org-scope";
+import { circleWhere, divisionWhere } from "@/lib/org-scope";
 import { DivisionForm } from "@/components/dashboard/organisation/division-form";
-import { stringifyMapGeoJson, type DivisionInput } from "@/lib/validators/org";
+import { stringifyMapGeoJson, type DivisionInput } from "@/lib/validators/organisation";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -20,10 +20,10 @@ export default async function EditDivisionPage({ params }: Props) {
   const { id } = await params;
   const [division, circles] = await Promise.all([
     prisma.division.findFirst({
-      where: { id, ...divisionScopeWhere(session.user) },
+      where: { id, ...divisionWhere(session) },
     }),
     prisma.circle.findMany({
-      where: circleScopeWhere(session.user),
+      where: circleWhere(session),
       orderBy: { orderIndex: "asc" },
       include: { region: { select: { name: true } } },
     }),

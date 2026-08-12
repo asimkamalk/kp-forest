@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Role } from "@prisma/client";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { circleScopeWhere, regionScopeWhere } from "@/lib/org-scope";
+import { circleWhere, regionWhere } from "@/lib/org-scope";
 import {
   CirclesTableClient,
   type CircleRow,
@@ -18,12 +18,15 @@ export default async function CirclesDashboardPage() {
 
   const [circles, regions] = await Promise.all([
     prisma.circle.findMany({
-      where: circleScopeWhere(session.user),
+      where: circleWhere(session),
       orderBy: { orderIndex: "asc" },
-      include: { region: { select: { id: true, name: true } } },
+      include: {
+        region: { select: { id: true, name: true } },
+        _count: { select: { divisions: true } },
+      },
     }),
     prisma.region.findMany({
-      where: regionScopeWhere(session.user),
+      where: regionWhere(session),
       orderBy: { orderIndex: "asc" },
       select: { id: true, name: true },
     }),
@@ -35,8 +38,8 @@ export default async function CirclesDashboardPage() {
     regionId: c.regionId,
     regionName: c.region.name,
     headquarters: c.headquarters,
+    divisionCount: c._count.divisions,
     status: c.status,
-    orderIndex: c.orderIndex,
   }));
 
   const canCreate =

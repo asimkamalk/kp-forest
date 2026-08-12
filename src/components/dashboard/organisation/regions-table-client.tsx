@@ -4,27 +4,29 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable, StatusBadge, type DataTableAction } from "@/components/dashboard/data-table";
-import { deleteRegion } from "@/server/actions/region";
+import { deleteRegion } from "@/server/actions/organisation";
 
 export type RegionRow = {
   id: string;
-  name: string;
   code: string;
+  name: string;
   headquarters: string;
+  circleCount: number;
+  divisionCount: number;
   status: string;
-  orderIndex: number;
 };
 
 const columns: ColumnDef<RegionRow, unknown>[] = [
   { accessorKey: "code", header: "Code" },
   { accessorKey: "name", header: "Name" },
   { accessorKey: "headquarters", header: "HQ" },
+  { accessorKey: "circleCount", header: "Circles" },
+  { accessorKey: "divisionCount", header: "Divisions" },
   {
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => <StatusBadge status={row.original.status} />,
   },
-  { accessorKey: "orderIndex", header: "Order" },
 ];
 
 export function RegionsTableClient({ rows }: { rows: RegionRow[] }) {
@@ -37,7 +39,7 @@ export function RegionsTableClient({ rows }: { rows: RegionRow[] }) {
       variant: "destructive",
       confirm: {
         title: "Delete region?",
-        description: "This will cascade-delete circles and divisions under it.",
+        description: "Blocked if the region still has circles.",
       },
       onClick: async (row) => {
         const result = await deleteRegion(row.id);

@@ -4,8 +4,8 @@ import { useRouter } from "next/navigation";
 import { PublishStatus } from "@prisma/client";
 import { ResourceForm, type FieldDescriptor } from "@/components/dashboard/resource-form";
 import { ImagePicker } from "@/components/dashboard/image-picker";
-import { circleSchema, type CircleInput } from "@/lib/validators/org";
-import { createCircle, updateCircle } from "@/server/actions/circle";
+import { circleSchema, type CircleInput } from "@/lib/validators/organisation";
+import { createCircle, updateCircle } from "@/server/actions/organisation";
 import type { ActionResult } from "@/server/actions/types";
 
 const STATUS_OPTIONS = Object.values(PublishStatus).map((s) => ({ label: s, value: s }));
@@ -30,7 +30,12 @@ export function CircleForm({ mode, circleId, defaults, regions }: Props) {
     },
     { name: "name", label: "Name", tab: "en" },
     { name: "nameUr", label: "Name (Urdu)", tab: "ur" },
-    { name: "slug", label: "Slug", tab: "all" },
+    {
+      name: "slug",
+      label: "Slug",
+      tab: "all",
+      description: "Unique within the parent region. Auto-generated from name.",
+    },
     { name: "headquarters", label: "Headquarters", tab: "all" },
     { name: "shortDesc", label: "Short description", type: "textarea", tab: "en", rows: 2 },
     { name: "description", label: "Description", type: "textarea", tab: "en", rows: 5 },
@@ -72,7 +77,7 @@ export function CircleForm({ mode, circleId, defaults, regions }: Props) {
       type: "json",
       tab: "all",
       rows: 8,
-      description: "Paste a Feature or FeatureCollection JSON string.",
+      description: "Paste a Feature or FeatureCollection. Invalid JSON blocks save.",
     },
     {
       name: "status",
@@ -90,6 +95,7 @@ export function CircleForm({ mode, circleId, defaults, regions }: Props) {
       fields={fields}
       defaultValues={defaults}
       showLanguageTabs
+      autoSlug={mode === "create"}
       submitLabel={mode === "create" ? "Create circle" : "Save circle"}
       onSubmit={async (values): Promise<ActionResult> => {
         const result =

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Role } from "@prisma/client";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { regionScopeWhere } from "@/lib/org-scope";
+import { regionWhere } from "@/lib/org-scope";
 import {
   RegionsTableClient,
   type RegionRow,
@@ -17,17 +17,22 @@ export default async function RegionsDashboardPage() {
   );
 
   const regions = await prisma.region.findMany({
-    where: regionScopeWhere(session.user),
+    where: regionWhere(session),
     orderBy: { orderIndex: "asc" },
+    include: {
+      _count: { select: { circles: true } },
+      circles: { select: { _count: { select: { divisions: true } } } },
+    },
   });
 
   const rows: RegionRow[] = regions.map((r) => ({
     id: r.id,
-    name: r.name,
     code: r.code,
+    name: r.name,
     headquarters: r.headquarters,
+    circleCount: r._count.circles,
+    divisionCount: r.circles.reduce((sum, c) => sum + c._count.divisions, 0),
     status: r.status,
-    orderIndex: r.orderIndex,
   }));
 
   return (

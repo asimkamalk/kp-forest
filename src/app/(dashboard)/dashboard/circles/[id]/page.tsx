@@ -3,9 +3,9 @@ import Link from "next/link";
 import { Role } from "@prisma/client";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { circleScopeWhere, regionScopeWhere } from "@/lib/org-scope";
+import { circleWhere, regionWhere } from "@/lib/org-scope";
 import { CircleForm } from "@/components/dashboard/organisation/circle-form";
-import { stringifyMapGeoJson, type CircleInput } from "@/lib/validators/org";
+import { stringifyMapGeoJson, type CircleInput } from "@/lib/validators/organisation";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -20,10 +20,10 @@ export default async function EditCirclePage({ params }: Props) {
   const { id } = await params;
   const [circle, regions] = await Promise.all([
     prisma.circle.findFirst({
-      where: { id, ...circleScopeWhere(session.user) },
+      where: { id, ...circleWhere(session) },
     }),
     prisma.region.findMany({
-      where: regionScopeWhere(session.user),
+      where: regionWhere(session),
       orderBy: { orderIndex: "asc" },
       select: { id: true, name: true },
     }),

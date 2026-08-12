@@ -2,9 +2,9 @@ import Link from "next/link";
 import { PublishStatus, Role } from "@prisma/client";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { circleScopeWhere } from "@/lib/org-scope";
+import { circleWhere } from "@/lib/org-scope";
 import { DivisionForm } from "@/components/dashboard/organisation/division-form";
-import type { DivisionInput } from "@/lib/validators/org";
+import type { DivisionInput } from "@/lib/validators/organisation";
 
 export default async function NewDivisionPage() {
   const session = await requireRole(
@@ -14,7 +14,7 @@ export default async function NewDivisionPage() {
   );
 
   const circles = await prisma.circle.findMany({
-    where: circleScopeWhere(session.user),
+    where: circleWhere(session),
     orderBy: { orderIndex: "asc" },
     include: { region: { select: { name: true } } },
   });

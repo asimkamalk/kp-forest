@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable, StatusBadge, type DataTableAction } from "@/components/dashboard/data-table";
-import { deleteCircle } from "@/server/actions/circle";
+import { deleteCircle } from "@/server/actions/organisation";
 
 export type CircleRow = {
   id: string;
@@ -13,8 +13,8 @@ export type CircleRow = {
   regionId: string;
   regionName: string;
   headquarters: string | null;
+  divisionCount: number;
   status: string;
-  orderIndex: number;
 };
 
 const columns: ColumnDef<CircleRow, unknown>[] = [
@@ -25,12 +25,12 @@ const columns: ColumnDef<CircleRow, unknown>[] = [
     header: "HQ",
     cell: ({ row }) => row.original.headquarters ?? "—",
   },
+  { accessorKey: "divisionCount", header: "Divisions" },
   {
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => <StatusBadge status={row.original.status} />,
   },
-  { accessorKey: "orderIndex", header: "Order" },
 ];
 
 type Props = {
@@ -53,7 +53,7 @@ export function CirclesTableClient({ rows, regions }: Props) {
       variant: "destructive",
       confirm: {
         title: "Delete circle?",
-        description: "This will cascade-delete divisions under it.",
+        description: "Blocked if the circle still has divisions.",
       },
       onClick: async (row) => {
         const result = await deleteCircle(row.id);

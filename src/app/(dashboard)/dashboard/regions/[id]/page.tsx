@@ -3,9 +3,9 @@ import Link from "next/link";
 import { Role } from "@prisma/client";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { regionScopeWhere } from "@/lib/org-scope";
+import { regionWhere } from "@/lib/org-scope";
 import { RegionForm } from "@/components/dashboard/organisation/region-form";
-import { stringifyMapGeoJson, type RegionInput } from "@/lib/validators/org";
+import { stringifyMapGeoJson, type RegionInput } from "@/lib/validators/organisation";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -19,7 +19,7 @@ export default async function EditRegionPage({ params }: Props) {
 
   const { id } = await params;
   const region = await prisma.region.findFirst({
-    where: { id, ...regionScopeWhere(session.user) },
+    where: { id, ...regionWhere(session) },
   });
   if (!region) notFound();
 
@@ -45,8 +45,6 @@ export default async function EditRegionPage({ params }: Props) {
     orderIndex: region.orderIndex,
     status: region.status,
     mapGeoJson: stringifyMapGeoJson(region.mapGeoJson),
-    seoTitle: region.seoTitle,
-    seoDescription: region.seoDescription,
   };
 
   return (

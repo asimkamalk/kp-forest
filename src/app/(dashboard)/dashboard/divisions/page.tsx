@@ -2,11 +2,7 @@ import Link from "next/link";
 import { Role } from "@prisma/client";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import {
-  circleScopeWhere,
-  divisionScopeWhere,
-  regionScopeWhere,
-} from "@/lib/org-scope";
+import { circleWhere, divisionWhere, regionWhere } from "@/lib/org-scope";
 import {
   DivisionsTableClient,
   type DivisionRow,
@@ -22,7 +18,7 @@ export default async function DivisionsDashboardPage() {
 
   const [divisions, regions, circles] = await Promise.all([
     prisma.division.findMany({
-      where: divisionScopeWhere(session.user),
+      where: divisionWhere(session),
       orderBy: { orderIndex: "asc" },
       include: {
         circle: {
@@ -36,12 +32,12 @@ export default async function DivisionsDashboardPage() {
       },
     }),
     prisma.region.findMany({
-      where: regionScopeWhere(session.user),
+      where: regionWhere(session),
       orderBy: { orderIndex: "asc" },
       select: { id: true, name: true },
     }),
     prisma.circle.findMany({
-      where: circleScopeWhere(session.user),
+      where: circleWhere(session),
       orderBy: { orderIndex: "asc" },
       select: { id: true, name: true, regionId: true },
     }),
@@ -54,9 +50,9 @@ export default async function DivisionsDashboardPage() {
     circleName: d.circle.name,
     regionId: d.circle.regionId,
     regionName: d.circle.region.name,
-    forestType: d.forestType,
+    headquarters: d.headquarters,
+    officerName: d.officerName,
     status: d.status,
-    orderIndex: d.orderIndex,
   }));
 
   const canCreate = session.user.role !== Role.DIVISION_ADMIN;

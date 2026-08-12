@@ -3,9 +3,10 @@ import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { detectFileSignature } from "@/lib/file-signature";
 
-const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
-const MAX_BYTES = 5 * 1024 * 1024;
+const IMAGE_MAX_BYTES = 5 * 1024 * 1024;
+const DOCUMENT_MAX_BYTES = 20 * 1024 * 1024;
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -18,14 +19,27 @@ export async function POST(request: Request) {
   if (!(file instanceof File)) {
     return NextResponse.json({ ok: false, error: "No file uploaded" }, { status: 400 });
   }
-  if (!ALLOWED.has(file.type)) {
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const detected = detectFileSignature(buffer);
+  if (!detected) {
     return NextResponse.json(
-      { ok: false, error: "Only JPEG, PNG, WebP and GIF images are allowed" },
+      {
+        ok: false,
+        error:
+          "Unrecognised file. Allowed: JPEG, PNG, WebP, GIF, PDF, DOC, DOCX, XLS, XLSX",
+      },
       { status: 400 }
     );
   }
-  if (file.size > MAX_BYTES) {
-    return NextResponse.json({ ok: false, error: "File must be 5MB or smaller" }, { status: 400 });
+
+  const maxBytes = detected.category === "image" ? IMAGE_MAX_BYTES : DOCUMENT_MAX_BYTES;
+  if (buffer.length > maxBytes) {
+    const limitLabel = detected.category === "image" ? "5MB" : "20MB";
+    return NextResponse.json(
+      { ok: false, error: `File must be ${limitLabel} or smaller` },
+      { status: 400 }
+    );
   }
 
   const uploadDir = process.env.UPLOAD_DIR || "./public/uploads";
@@ -34,10 +48,8 @@ export async function POST(request: Request) {
     : path.join(process.cwd(), uploadDir);
   await mkdir(absDir, { recursive: true });
 
-  const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
-  const safeName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const safeName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${detected.extension}`;
   const absPath = path.join(absDir, safeName);
-  const buffer = Buffer.from(await file.arrayBuffer());
   await writeFile(absPath, buffer);
 
   const publicUrl = `/uploads/${safeName}`;
@@ -45,12 +57,21 @@ export async function POST(request: Request) {
     data: {
       url: publicUrl,
       fileName: file.name,
-      mimeType: file.type,
-      sizeBytes: file.size,
-      folder: "uploads",
+      mimeType: detected.mimeType,
+      sizeBytes: buffer.length,
+      folder: detected.category === "document" ? "documents" : "uploads",
       uploadedBy: session.user.id,
     },
   });
 
-  return NextResponse.json({ ok: true, data: { url: asset.url, id: asset.id } });
+  return NextResponse.json({
+    ok: true,
+    data: {
+      url: asset.url,
+      id: asset.id,
+      sizeBytes: asset.sizeBytes,
+      mimeType: asset.mimeType,
+      fileName: asset.fileName,
+    },
+  });
 }

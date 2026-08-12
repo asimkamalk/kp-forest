@@ -2,7 +2,7 @@ import Link from "next/link";
 import { PublishStatus, Role } from "@prisma/client";
 import { requireRole } from "@/lib/auth";
 import { RegionForm } from "@/components/dashboard/organisation/region-form";
-import type { RegionInput } from "@/lib/validators/org";
+import type { RegionInput } from "@/lib/validators/organisation";
 
 const defaults: RegionInput = {
   name: "",
@@ -26,8 +26,6 @@ const defaults: RegionInput = {
   orderIndex: 0,
   status: PublishStatus.PUBLISHED,
   mapGeoJson: "",
-  seoTitle: "",
-  seoDescription: "",
 };
 
 export default async function NewRegionPage() {

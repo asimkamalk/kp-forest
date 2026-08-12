@@ -1,55 +1,59 @@
-import { Role, type Prisma } from "@prisma/client";
-import type { SessionUser } from "@/lib/auth";
+import { type Prisma } from "@prisma/client";
+import { scopeFilter, type SessionUser } from "@/lib/auth";
 
-export function regionScopeWhere(user: SessionUser): Prisma.RegionWhereInput {
-  switch (user.role) {
-    case Role.SUPER_ADMIN:
-      return {};
-    case Role.REGION_ADMIN:
-      return user.regionId ? { id: user.regionId } : { id: "__no_scope__" };
-    case Role.CIRCLE_ADMIN:
-      return user.circleId
-        ? { circles: { some: { id: user.circleId } } }
-        : { id: "__no_scope__" };
-    case Role.DIVISION_ADMIN:
-      return user.divisionId
-        ? { circles: { some: { divisions: { some: { id: user.divisionId } } } } }
-        : { id: "__no_scope__" };
-    default:
-      return { id: "__no_scope__" };
+type Session = { user: SessionUser };
+
+/**
+ * Apply scopeFilter(session) to Region / Circle / Division queries.
+ * scopeFilter returns user-shaped keys; org models need id / parent-id mapping.
+ */
+export function regionWhere(session: Session): Prisma.RegionWhereInput {
+  const scope = scopeFilter(session);
+  if (Object.keys(scope).length === 0) return {};
+  if (typeof scope.regionId === "string") return { id: scope.regionId };
+  if (typeof scope.circleId === "string") {
+    return { circles: { some: { id: scope.circleId } } };
   }
+  if (typeof scope.divisionId === "string") {
+    return { circles: { some: { divisions: { some: { id: scope.divisionId } } } } };
+  }
+  if (typeof scope.id === "string") return { id: scope.id };
+  return { id: "__no_scope__" };
+}
+
+export function circleWhere(session: Session): Prisma.CircleWhereInput {
+  const scope = scopeFilter(session);
+  if (Object.keys(scope).length === 0) return {};
+  if (typeof scope.regionId === "string") return { regionId: scope.regionId };
+  if (typeof scope.circleId === "string") return { id: scope.circleId };
+  if (typeof scope.divisionId === "string") {
+    return { divisions: { some: { id: scope.divisionId } } };
+  }
+  if (typeof scope.id === "string") return { id: scope.id };
+  return { id: "__no_scope__" };
+}
+
+export function divisionWhere(session: Session): Prisma.DivisionWhereInput {
+  const scope = scopeFilter(session);
+  if (Object.keys(scope).length === 0) return {};
+  if (typeof scope.regionId === "string") {
+    return { circle: { regionId: scope.regionId } };
+  }
+  if (typeof scope.circleId === "string") return { circleId: scope.circleId };
+  if (typeof scope.divisionId === "string") return { id: scope.divisionId };
+  if (typeof scope.id === "string") return { id: scope.id };
+  return { id: "__no_scope__" };
+}
+
+/** Aliases used by older call sites. */
+export function regionScopeWhere(user: SessionUser): Prisma.RegionWhereInput {
+  return regionWhere({ user });
 }
 
 export function circleScopeWhere(user: SessionUser): Prisma.CircleWhereInput {
-  switch (user.role) {
-    case Role.SUPER_ADMIN:
-      return {};
-    case Role.REGION_ADMIN:
-      return user.regionId ? { regionId: user.regionId } : { id: "__no_scope__" };
-    case Role.CIRCLE_ADMIN:
-      return user.circleId ? { id: user.circleId } : { id: "__no_scope__" };
-    case Role.DIVISION_ADMIN:
-      return user.divisionId
-        ? { divisions: { some: { id: user.divisionId } } }
-        : { id: "__no_scope__" };
-    default:
-      return { id: "__no_scope__" };
-  }
+  return circleWhere({ user });
 }
 
 export function divisionScopeWhere(user: SessionUser): Prisma.DivisionWhereInput {
-  switch (user.role) {
-    case Role.SUPER_ADMIN:
-      return {};
-    case Role.REGION_ADMIN:
-      return user.regionId
-        ? { circle: { regionId: user.regionId } }
-        : { id: "__no_scope__" };
-    case Role.CIRCLE_ADMIN:
-      return user.circleId ? { circleId: user.circleId } : { id: "__no_scope__" };
-    case Role.DIVISION_ADMIN:
-      return user.divisionId ? { id: user.divisionId } : { id: "__no_scope__" };
-    default:
-      return { id: "__no_scope__" };
-  }
+  return divisionWhere({ user });
 }

@@ -4,8 +4,8 @@ import { useRouter } from "next/navigation";
 import { PublishStatus } from "@prisma/client";
 import { ResourceForm, type FieldDescriptor } from "@/components/dashboard/resource-form";
 import { ImagePicker } from "@/components/dashboard/image-picker";
-import { regionSchema, type RegionInput } from "@/lib/validators/org";
-import { createRegion, updateRegion } from "@/server/actions/region";
+import { regionSchema, type RegionInput } from "@/lib/validators/organisation";
+import { createRegion, updateRegion } from "@/server/actions/organisation";
 import type { ActionResult } from "@/server/actions/types";
 
 const STATUS_OPTIONS = Object.values(PublishStatus).map((s) => ({ label: s, value: s }));
@@ -23,7 +23,12 @@ export function RegionForm({ mode, regionId, defaults }: Props) {
     { name: "name", label: "Name", tab: "en" },
     { name: "nameUr", label: "Name (Urdu)", tab: "ur" },
     { name: "code", label: "Code", tab: "all", placeholder: "I" },
-    { name: "slug", label: "Slug", tab: "all" },
+    {
+      name: "slug",
+      label: "Slug",
+      tab: "all",
+      description: "Auto-generated from name; edit anytime.",
+    },
     { name: "headquarters", label: "Headquarters", tab: "all" },
     { name: "shortDesc", label: "Short description", type: "textarea", tab: "en", rows: 2 },
     { name: "description", label: "Description", type: "textarea", tab: "en", rows: 5 },
@@ -65,10 +70,8 @@ export function RegionForm({ mode, regionId, defaults }: Props) {
       type: "json",
       tab: "all",
       rows: 8,
-      description: "Paste a Feature or FeatureCollection JSON string.",
+      description: "Paste a Feature or FeatureCollection. Invalid JSON blocks save.",
     },
-    { name: "seoTitle", label: "SEO title", tab: "en" },
-    { name: "seoDescription", label: "SEO description", type: "textarea", tab: "en", rows: 2 },
     {
       name: "status",
       label: "Status",
@@ -85,6 +88,7 @@ export function RegionForm({ mode, regionId, defaults }: Props) {
       fields={fields}
       defaultValues={defaults}
       showLanguageTabs
+      autoSlug={mode === "create"}
       submitLabel={mode === "create" ? "Create region" : "Save region"}
       onSubmit={async (values): Promise<ActionResult> => {
         const result =

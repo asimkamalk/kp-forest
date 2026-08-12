@@ -1,6 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { PublishStatus } from "@prisma/client";
+import { DownloadKind, PublishStatus } from "@prisma/client";
 
 const PUBLISHED = { status: PublishStatus.PUBLISHED } as const;
 
@@ -262,6 +262,65 @@ export const getPublishedRegionSlugs = unstable_cache(
     }),
   ["region-slugs"],
   { tags: ["regions"], revalidate: 3600 }
+);
+
+/* ------------------------------- DOWNLOADS ------------------------------- */
+
+export type PublicDownload = {
+  id: string;
+  title: string;
+  titleUr: string | null;
+  kind: DownloadKind;
+  description: string | null;
+  fileUrl: string;
+  fileSize: number | null;
+  documentDate: Date | null;
+  downloadCount: number;
+};
+
+export async function getDownloadsByKinds(kinds: DownloadKind[]): Promise<PublicDownload[]> {
+  const key = ["downloads-by-kinds", ...kinds].join("-");
+  return unstable_cache(
+    async () =>
+      prisma.download.findMany({
+        where: { ...PUBLISHED, kind: { in: kinds } },
+        orderBy: [{ documentDate: "desc" }, { orderIndex: "asc" }, { title: "asc" }],
+        select: {
+          id: true,
+          title: true,
+          titleUr: true,
+          kind: true,
+          description: true,
+          fileUrl: true,
+          fileSize: true,
+          documentDate: true,
+          downloadCount: true,
+        },
+      }),
+    [key],
+    { tags: ["downloads"], revalidate: 300 }
+  )();
+}
+
+export const getDownloads = unstable_cache(
+  async (): Promise<PublicDownload[]> =>
+    prisma.download.findMany({
+      where: PUBLISHED,
+      orderBy: [{ documentDate: "desc" }, { orderIndex: "asc" }, { title: "asc" }],
+      select: {
+        id: true,
+        title: true,
+        titleUr: true,
+        kind: true,
+        description: true,
+        fileUrl: true,
+        fileSize: true,
+        documentDate: true,
+        downloadCount: true,
+      },
+    }),
+  ["downloads-all"],
+  { tags: ["downloads"], revalidate: 300 }
 );
 
 /* ------------------------------ SITE SETTINGS ---------------------------- */

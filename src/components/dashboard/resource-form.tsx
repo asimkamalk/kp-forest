@@ -43,6 +43,7 @@ export type FieldDescriptor<T extends FieldValues> = {
     value: unknown;
     onChange: (value: unknown) => void;
     error?: string;
+    setValue: (name: Path<T>, value: unknown) => void;
   }) => ReactNode;
 };
 
@@ -175,6 +176,8 @@ export function ResourceForm<T extends FieldValues>({
                         value: rhf.value,
                         onChange: rhf.onChange,
                         error,
+                        setValue: (name, value) =>
+                          setValue(name, value as never, { shouldDirty: true }),
                       })}
                     </>
                   )}
