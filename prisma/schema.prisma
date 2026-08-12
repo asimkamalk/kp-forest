@@ -1,0 +1,754 @@
+// KP Forest Department — Prisma schema
+// Models for Phases 1–4 are all here so migrations stay stable as you build UI phase by phase.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─────────────────────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────────────────────
+
+enum Role {
+  SUPER_ADMIN
+  REGION_ADMIN
+  CIRCLE_ADMIN
+  DIVISION_ADMIN
+  EDITOR
+  VIEWER
+}
+
+enum PublishStatus {
+  DRAFT
+  REVIEW
+  PUBLISHED
+  ARCHIVED
+}
+
+enum MessageKind {
+  MINISTER
+  ADVISOR
+  CHIEF_MINISTER
+  SECRETARY_CLIMATE_CHANGE
+  SECRETARY
+  CHIEF_CONSERVATOR
+  CONSERVATOR
+  DFO
+  OTHER
+}
+
+enum OperationKind {
+  MARKING
+  HARVESTING
+  ACTION
+  MONITORING
+}
+
+enum CampaignScope {
+  URBAN
+  RURAL
+  BOTH
+}
+
+enum ProjectStatus {
+  COMPLETED
+  ONGOING
+  FUTURE
+}
+
+enum MediaKind {
+  PRESS_RELEASE
+  PRESS_NOTE
+  NEWS_COVERAGE
+  INTERVIEW
+  MYTH_VS_FACT
+  RAPID_RESPONSE
+}
+
+enum RequestKind {
+  PLANT
+  RESEARCH
+  GENERAL
+}
+
+enum RequestStatus {
+  NEW
+  IN_REVIEW
+  APPROVED
+  REJECTED
+  FULFILLED
+}
+
+enum DownloadKind {
+  ACT
+  RULE
+  POLICY
+  FORM
+  REPORT
+  NOTIFICATION
+}
+
+enum SocialPlatform {
+  FACEBOOK
+  X
+  INSTAGRAM
+  YOUTUBE
+  LINKEDIN
+  TIKTOK
+  WHATSAPP
+}
+
+enum NavTarget {
+  SELF
+  BLANK
+}
+
+// ─────────────────────────────────────────────────────────────
+// AUTH & ADMIN
+// ─────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(VIEWER)
+  designation  String?
+  phone        String?
+  avatarUrl    String?
+  isActive     Boolean  @default(true)
+  lastLoginAt  DateTime?
+
+  // Row-level scope. Null on a SUPER_ADMIN.
+  regionId   String?
+  circleId   String?
+  divisionId String?
+  region     Region?   @relation(fields: [regionId], references: [id], onDelete: SetNull)
+  circle     Circle?   @relation(fields: [circleId], references: [id], onDelete: SetNull)
+  division   Division? @relation(fields: [divisionId], references: [id], onDelete: SetNull)
+
+  auditLogs AuditLog[]
+  sessions  Session[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([role])
+  @@index([regionId, circleId, divisionId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model AuditLog {
+  id       String   @id @default(cuid())
+  userId   String?
+  user     User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action   String // CREATE | UPDATE | DELETE | PUBLISH | LOGIN
+  entity   String // "Division", "HeroSlide", ...
+  entityId String?
+  before   Json?
+  after    Json?
+  ip       String?
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([createdAt])
+}
+
+// ─────────────────────────────────────────────────────────────
+// SITE CHROME  (Phase 1)
+// ─────────────────────────────────────────────────────────────
+
+model SiteSetting {
+  id              String  @id @default("singleton")
+  siteName        String  @default("Forest Department, Khyber Pakhtunkhwa")
+  siteNameUr      String?
+  tagline         String?
+  taglineUr       String?
+  logoUrl         String?
+  faviconUrl      String?
+  emblemUrl       String?
+  primaryColor    String  @default("#166534")
+  accentColor     String  @default("#ca8a04")
+  address         String?
+  phone           String?
+  email           String?
+  helplineNumber  String?
+  footerNote      String?
+  googleAnalytics String?
+  maintenanceMode Boolean @default(false)
+  updatedAt       DateTime @updatedAt
+}
+
+/// Drives the public navbar. Self-referencing for dropdowns / mega-menu columns.
+model NavItem {
+  id         String     @id @default(cuid())
+  label      String
+  labelUr    String?
+  href       String? // null when the item is only a dropdown trigger
+  icon       String? // lucide icon name
+  target     NavTarget  @default(SELF)
+  orderIndex Int        @default(0)
+  isVisible  Boolean    @default(true)
+  isMegaMenu Boolean    @default(false)
+  /// When true the children are generated from Regions at request time
+  isDynamicRegions Boolean @default(false)
+
+  parentId String?
+  parent   NavItem?  @relation("NavTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children NavItem[] @relation("NavTree")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([parentId, orderIndex])
+}
+
+model HeroSlide {
+  id           String        @id @default(cuid())
+  title        String
+  titleUr      String?
+  subtitle     String?
+  subtitleUr   String?
+  imageUrl     String
+  imageAlt     String?
+  ctaLabel     String?
+  ctaHref      String?
+  secondaryCtaLabel String?
+  secondaryCtaHref  String?
+  overlayOpacity    Int      @default(45) // 0–100
+  orderIndex   Int           @default(0)
+  status       PublishStatus @default(DRAFT)
+  startsAt     DateTime?
+  endsAt       DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, orderIndex])
+}
+
+/// Minister / Secretary / Chief Conservator messages
+model Message {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  kind        MessageKind   @default(OTHER)
+  personName  String
+  personNameUr String?
+  designation String
+  designationUr String?
+  photoUrl    String?
+  excerpt     String? // shown on the card
+  excerptUr   String?
+  body        String // full message (rich text / markdown)
+  bodyUr      String?
+  signatureUrl String?
+  orderIndex  Int           @default(0)
+  status      PublishStatus @default(DRAFT)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, orderIndex])
+}
+
+/// Homepage animated counters (forest cover, saplings planted, ...)
+model StatCounter {
+  id         String        @id @default(cuid())
+  label      String
+  labelUr    String?
+  value      Float
+  suffix     String? // "M", "ha", "%"
+  prefix     String?
+  icon       String?
+  orderIndex Int           @default(0)
+  status     PublishStatus @default(PUBLISHED)
+}
+
+// ─────────────────────────────────────────────────────────────
+// ORG STRUCTURE  (Phase 1 + 2)
+// ─────────────────────────────────────────────────────────────
+
+model Region {
+  id           String        @id @default(cuid())
+  slug         String        @unique
+  code         String        @unique // "I", "II", "III"
+  name         String
+  nameUr       String?
+  headquarters String
+  shortDesc    String?
+  description  String?
+  descriptionUr String?
+  coverImage   String?
+  officerName  String? // Conservator / Chief Conservator
+  officerDesignation String?
+  officerPhoto String?
+  contactPhone String?
+  contactEmail String?
+  address      String?
+  /// GeoJSON FeatureCollection for the region boundary
+  mapGeoJson   Json?
+  centerLat    Float?
+  centerLng    Float?
+  areaHectares Float?
+  orderIndex   Int           @default(0)
+  status       PublishStatus @default(PUBLISHED)
+  seoTitle     String?
+  seoDescription String?
+
+  circles   Circle[]
+  users     User[]
+  galleries GalleryAlbum[]
+  activities Activity[]
+  projects  Project[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, orderIndex])
+}
+
+model Circle {
+  id           String        @id @default(cuid())
+  slug         String
+  name         String
+  nameUr       String?
+  headquarters String?
+  shortDesc    String?
+  description  String?
+  descriptionUr String?
+  coverImage   String?
+  officerName  String? // Conservator of Forests
+  officerDesignation String? @default("Conservator of Forests")
+  officerPhoto String?
+  contactPhone String?
+  contactEmail String?
+  address      String?
+  mapGeoJson   Json?
+  centerLat    Float?
+  centerLng    Float?
+  areaHectares Float?
+  orderIndex   Int           @default(0)
+  status       PublishStatus @default(PUBLISHED)
+
+  regionId String
+  region   Region @relation(fields: [regionId], references: [id], onDelete: Cascade)
+
+  divisions  Division[]
+  users      User[]
+  galleries  GalleryAlbum[]
+  activities Activity[]
+  projects   Project[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([regionId, slug])
+  @@index([regionId, orderIndex])
+}
+
+model Division {
+  id           String        @id @default(cuid())
+  slug         String
+  name         String
+  nameUr       String?
+  headquarters String?
+  shortDesc    String?
+  description  String?
+  descriptionUr String?
+  coverImage   String?
+  officerName  String? // Divisional Forest Officer
+  officerDesignation String? @default("Divisional Forest Officer")
+  officerPhoto String?
+  contactPhone String?
+  contactEmail String?
+  address      String?
+  mapGeoJson   Json?
+  centerLat    Float?
+  centerLng    Float?
+  areaHectares Float?
+  forestType   String?
+  orderIndex   Int           @default(0)
+  status       PublishStatus @default(PUBLISHED)
+
+  circleId String
+  circle   Circle @relation(fields: [circleId], references: [id], onDelete: Cascade)
+
+  subDivisions SubDivision[]
+  galleries    GalleryAlbum[]
+  activities   Activity[]
+  operations   ForestOperation[]
+  campaigns    PlantationCampaign[]
+  projects     Project[]
+  contacts     ContactPerson[]
+  socialLinks  SocialLink[]
+  users        User[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([circleId, slug])
+  @@index([circleId, orderIndex])
+}
+
+model SubDivision {
+  id          String        @id @default(cuid())
+  slug        String
+  name        String
+  nameUr      String?
+  description String?
+  officerName String?
+  officerDesignation String? @default("Sub-Divisional Forest Officer")
+  contactPhone String?
+  beats       String? // comma separated / rich text
+  areaHectares Float?
+  orderIndex  Int           @default(0)
+  status      PublishStatus @default(PUBLISHED)
+
+  divisionId String
+  division   Division @relation(fields: [divisionId], references: [id], onDelete: Cascade)
+
+  @@unique([divisionId, slug])
+}
+
+// ─────────────────────────────────────────────────────────────
+// MEDIA LIBRARY & GALLERIES
+// ─────────────────────────────────────────────────────────────
+
+model MediaAsset {
+  id         String  @id @default(cuid())
+  url        String
+  fileName   String
+  mimeType   String
+  sizeBytes  Int
+  width      Int?
+  height     Int?
+  alt        String?
+  caption    String?
+  folder     String? @default("uploads")
+  uploadedBy String?
+  createdAt  DateTime @default(now())
+
+  galleryImages GalleryImage[]
+
+  @@index([folder, createdAt])
+}
+
+model GalleryAlbum {
+  id          String        @id @default(cuid())
+  slug        String
+  title       String
+  titleUr     String?
+  description String?
+  coverImage  String?
+  orderIndex  Int           @default(0)
+  status      PublishStatus @default(PUBLISHED)
+
+  // an album belongs to exactly one of these
+  regionId   String?
+  circleId   String?
+  divisionId String?
+  region     Region?   @relation(fields: [regionId], references: [id], onDelete: Cascade)
+  circle     Circle?   @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  division   Division? @relation(fields: [divisionId], references: [id], onDelete: Cascade)
+
+  images GalleryImage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([divisionId])
+}
+
+model GalleryImage {
+  id         String @id @default(cuid())
+  albumId    String
+  album      GalleryAlbum @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  assetId    String
+  asset      MediaAsset   @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  caption    String?
+  captionUr  String?
+  orderIndex Int    @default(0)
+
+  @@index([albumId, orderIndex])
+}
+
+// ─────────────────────────────────────────────────────────────
+// OPERATIONS, CAMPAIGNS, PROJECTS  (Phase 3)
+// ─────────────────────────────────────────────────────────────
+
+model Activity {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  title       String
+  titleUr     String?
+  summary     String?
+  body        String?
+  coverImage  String?
+  startDate   DateTime?
+  endDate     DateTime?
+  orderIndex  Int           @default(0)
+  status      PublishStatus @default(DRAFT)
+
+  regionId   String?
+  circleId   String?
+  divisionId String?
+  region     Region?   @relation(fields: [regionId], references: [id], onDelete: Cascade)
+  circle     Circle?   @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  division   Division? @relation(fields: [divisionId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ForestOperation {
+  id           String        @id @default(cuid())
+  kind         OperationKind
+  title        String
+  reference    String? // marking/permit number
+  description  String?
+  species      String?
+  volumeCft    Float?
+  treeCount    Int?
+  compartment  String?
+  operationDate DateTime?
+  officerName  String?
+  documentUrl  String?
+  status       PublishStatus @default(DRAFT)
+
+  divisionId String
+  division   Division @relation(fields: [divisionId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([divisionId, kind, operationDate])
+}
+
+model PlantationCampaign {
+  id           String        @id @default(cuid())
+  slug         String        @unique
+  title        String
+  titleUr      String?
+  scope        CampaignScope @default(BOTH)
+  season       String? // "Spring 2026"
+  year         Int
+  targetPlants Int           @default(0)
+  achievedPlants Int         @default(0)
+  targetArea   Float?
+  achievedArea Float?
+  species      String?
+  description  String?
+  coverImage   String?
+  mapGeoJson   Json?
+  startDate    DateTime?
+  endDate      DateTime?
+  status       PublishStatus @default(DRAFT)
+
+  divisionId String?
+  division   Division? @relation(fields: [divisionId], references: [id], onDelete: Cascade)
+
+  successStories SuccessStory[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([year, status])
+}
+
+model SuccessStory {
+  id         String        @id @default(cuid())
+  slug       String        @unique
+  title      String
+  titleUr    String?
+  summary    String?
+  body       String
+  coverImage String?
+  location   String?
+  status     PublishStatus @default(DRAFT)
+
+  campaignId String?
+  campaign   PlantationCampaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Project {
+  id            String        @id @default(cuid())
+  slug          String        @unique
+  title         String
+  titleUr       String?
+  projectStatus ProjectStatus
+  summary       String?
+  description   String?
+  costPkr       Float?
+  fundingSource String?
+  startDate     DateTime?
+  endDate       DateTime?
+  progressPct   Int           @default(0)
+  coverImage    String?
+  documentUrl   String?
+  status        PublishStatus @default(DRAFT)
+
+  regionId   String?
+  circleId   String?
+  divisionId String?
+  region     Region?   @relation(fields: [regionId], references: [id], onDelete: SetNull)
+  circle     Circle?   @relation(fields: [circleId], references: [id], onDelete: SetNull)
+  division   Division? @relation(fields: [divisionId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectStatus, status])
+}
+
+// ─────────────────────────────────────────────────────────────
+// MEDIA CENTRE & PUBLIC SERVICES  (Phase 4)
+// ─────────────────────────────────────────────────────────────
+
+model MediaPost {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  kind        MediaKind
+  title       String
+  titleUr     String?
+  summary     String?
+  body        String?
+  coverImage  String?
+  sourceName  String? // newspaper / channel
+  sourceUrl   String?
+  videoUrl    String?
+  documentUrl String?
+  /// Myths vs Facts
+  mythText    String?
+  factText    String?
+  publishedAt DateTime?
+  status      PublishStatus @default(DRAFT)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([kind, status, publishedAt])
+}
+
+model ContactPerson {
+  id          String        @id @default(cuid())
+  name        String
+  designation String
+  department  String?
+  phone       String?
+  mobile      String?
+  email       String?
+  photoUrl    String?
+  isEmergency Boolean       @default(false)
+  orderIndex  Int           @default(0)
+  status      PublishStatus @default(PUBLISHED)
+
+  divisionId String?
+  division   Division? @relation(fields: [divisionId], references: [id], onDelete: Cascade)
+
+  @@index([isEmergency, orderIndex])
+}
+
+model SocialLink {
+  id       String         @id @default(cuid())
+  platform SocialPlatform
+  url      String
+  handle   String?
+
+  divisionId String?
+  division   Division? @relation(fields: [divisionId], references: [id], onDelete: Cascade)
+
+  @@index([divisionId])
+}
+
+model WildlifeSpecies {
+  id             String        @id @default(cuid())
+  slug           String        @unique
+  commonName     String
+  commonNameUr   String?
+  scientificName String?
+  category       String? // Mammal, Bird, Reptile
+  conservationStatus String? // IUCN
+  habitat        String?
+  description    String?
+  imageUrl       String?
+  status         PublishStatus @default(PUBLISHED)
+}
+
+model KnowYourForestArticle {
+  id         String        @id @default(cuid())
+  slug       String        @unique
+  title      String
+  titleUr    String?
+  summary    String?
+  body       String
+  coverImage String?
+  orderIndex Int           @default(0)
+  status     PublishStatus @default(DRAFT)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PublicRequest {
+  id           String        @id @default(cuid())
+  ticketNo     String        @unique
+  kind         RequestKind
+  fullName     String
+  cnic         String?
+  phone        String
+  email        String?
+  district     String?
+  address      String?
+  /// PLANT: species + quantity. RESEARCH: topic + institution.
+  species      String?
+  quantity     Int?
+  purpose      String?
+  institution  String?
+  topic        String?
+  attachmentUrl String?
+  requestStatus RequestStatus @default(NEW)
+  officerNote  String?
+  handledBy    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([kind, requestStatus, createdAt])
+}
+
+model Download {
+  id          String        @id @default(cuid())
+  title       String
+  titleUr     String?
+  kind        DownloadKind
+  description String?
+  fileUrl     String
+  fileSize    Int?
+  documentDate DateTime?
+  downloadCount Int         @default(0)
+  orderIndex  Int           @default(0)
+  status      PublishStatus @default(PUBLISHED)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([kind, status, orderIndex])
+}
