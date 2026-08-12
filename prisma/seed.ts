@@ -338,22 +338,22 @@ async function seedSite() {
     },
   ];
 
-  if ((await prisma.navItem.count()) === 0) {
-    for (const [i, item] of nav.entries()) {
-      const parent = await prisma.navItem.create({
-        data: {
-          label: item.label,
-          href: item.href,
-          orderIndex: i,
-          isDynamicRegions: Boolean(item.isDynamicRegions),
-          isMegaMenu: Boolean(item.isMegaMenu),
-        },
+  // Reseed navigation so the canonical menu stays exact across runs.
+  await prisma.navItem.deleteMany();
+  for (const [i, item] of nav.entries()) {
+    const parent = await prisma.navItem.create({
+      data: {
+        label: item.label,
+        href: item.href,
+        orderIndex: i,
+        isDynamicRegions: Boolean(item.isDynamicRegions),
+        isMegaMenu: Boolean(item.isMegaMenu),
+      },
+    });
+    for (const [j, child] of item.children.entries()) {
+      await prisma.navItem.create({
+        data: { label: child.label, href: child.href, orderIndex: j, parentId: parent.id },
       });
-      for (const [j, child] of item.children.entries()) {
-        await prisma.navItem.create({
-          data: { label: child.label, href: child.href, orderIndex: j, parentId: parent.id },
-        });
-      }
     }
   }
 
@@ -416,6 +416,18 @@ async function seedSite() {
       status: PublishStatus.PUBLISHED,
     },
   ] as const;
+
+  await prisma.message.deleteMany({
+    where: {
+      slug: {
+        in: [
+          "message-from-the-minister",
+          "message-from-the-secretary",
+          "message-from-the-chief-conservator",
+        ],
+      },
+    },
+  });
 
   for (const msg of messages) {
     await prisma.message.upsert({
