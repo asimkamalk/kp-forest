@@ -23,13 +23,17 @@
   --shadow-card-hover: 0 2px 4px rgb(16 37 27 / 0.08), 0 20px 40px -20px rgb(16 37 27 / 0.32);
 }
 
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  overflow-x: clip;
+}
 
 body {
   background: var(--color-paper);
   color: var(--color-bark);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
 }
 
 /* Display face only above 36px, with the optical-size axis pushed up */

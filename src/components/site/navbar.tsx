@@ -150,11 +150,14 @@ export function Navbar({
             </div>
           </Link>
 
-          <ul className="hidden items-center lg:flex">
-            {items.map((item) => {
+          <ul className="hidden min-w-0 items-center lg:flex">
+            {items.map((item, index) => {
               const hasChildren = item.children.length > 0;
               const open = openId === item.id;
               const active = itemActive(item);
+              /* Wide / late menus would overflow the viewport if left-aligned. */
+              const alignEnd =
+                item.isMegaMenu || index >= Math.max(0, items.length - 3);
 
               return (
                 <li
@@ -171,13 +174,13 @@ export function Navbar({
                       aria-expanded={open}
                       aria-haspopup="true"
                       onClick={() => setOpenId(open ? null : item.id)}
-                      className={`relative flex items-center gap-1 px-3.5 py-6 text-sm font-medium transition-colors ${
+                      className={`relative flex items-center gap-1 whitespace-nowrap px-2.5 py-6 text-sm font-medium transition-colors xl:px-3.5 ${
                         active || open ? "text-deodar" : "text-bark/80 hover:text-deodar"
                       }`}
                     >
                       {item.label}
                       <ChevronDown
-                        className={`h-3.5 w-3.5 transition-transform duration-200 ${
+                        className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${
                           open ? "rotate-180" : ""
                         }`}
                         aria-hidden
@@ -193,7 +196,7 @@ export function Navbar({
                   ) : item.href ? (
                     <Link
                       href={item.href}
-                      className={`relative block px-3.5 py-6 text-sm font-medium transition-colors ${
+                      className={`relative block whitespace-nowrap px-2.5 py-6 text-sm font-medium transition-colors xl:px-3.5 ${
                         active ? "text-deodar" : "text-bark/80 hover:text-deodar"
                       }`}
                     >
@@ -215,8 +218,12 @@ export function Navbar({
                         animate={{ opacity: 1, y: 0 }}
                         exit={reduce ? undefined : { opacity: 0, y: 8 }}
                         transition={{ duration: 0.18, ease: EASE }}
-                        className={`absolute left-0 top-full rounded-[12px] border border-mist bg-paper p-2 shadow-[var(--shadow-card)] ${
-                          item.isMegaMenu ? "grid w-[520px] grid-cols-2 gap-1" : "w-64"
+                        className={`absolute top-full z-50 rounded-[12px] border border-mist bg-paper p-2 shadow-[var(--shadow-card)] ${
+                          alignEnd ? "right-0 left-auto" : "left-0"
+                        } ${
+                          item.isMegaMenu
+                            ? "grid w-[min(520px,calc(100vw-2rem))] grid-cols-2 gap-1"
+                            : "w-64"
                         }`}
                       >
                         {item.children.map((child) =>
