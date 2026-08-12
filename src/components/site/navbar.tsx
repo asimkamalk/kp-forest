@@ -120,37 +120,52 @@ export function Navbar({
       >
         <nav
           aria-label="Main navigation"
-          className="mx-auto flex max-w-[1200px] items-center justify-between gap-6 px-6"
+          className="mx-auto max-w-[1200px] px-6"
         >
-          <Link href="/" className="flex shrink-0 items-center gap-3 py-3">
-            {brandSrc ? (
-              <Image
-                src={brandSrc}
-                alt=""
-                width={48}
-                height={48}
-                className="h-11 w-11 object-contain"
-                style={{ boxShadow: "inset 0 0 0 1px var(--color-mist)" }}
-              />
-            ) : (
-              <div
-                className="grid h-11 w-11 place-items-center rounded-[8px] bg-deodar font-mono text-sm font-medium text-paper"
-                aria-hidden
-              >
-                KP
-              </div>
-            )}
-            <div className="leading-tight">
-              <div className="font-sans text-[15px] font-semibold text-bark">{siteName}</div>
-              {siteNameUr && (
-                <div className="text-xs text-moss" lang="ur">
-                  {siteNameUr}
+          <div className="flex items-center justify-between gap-4">
+            <Link href="/" className="flex min-w-0 shrink items-center gap-3 py-3">
+              {brandSrc ? (
+                <Image
+                  src={brandSrc}
+                  alt=""
+                  width={48}
+                  height={48}
+                  className="h-11 w-11 shrink-0 object-contain"
+                  style={{ boxShadow: "inset 0 0 0 1px var(--color-mist)" }}
+                />
+              ) : (
+                <div
+                  className="grid h-11 w-11 shrink-0 place-items-center rounded-[8px] bg-deodar font-mono text-sm font-medium text-paper"
+                  aria-hidden
+                >
+                  KP
                 </div>
               )}
-            </div>
-          </Link>
+              <div className="min-w-0 leading-tight">
+                <div className="font-sans text-[15px] font-semibold text-bark">
+                  {siteName}
+                </div>
+                {siteNameUr && (
+                  <div className="text-xs text-moss" lang="ur">
+                    {siteNameUr}
+                  </div>
+                )}
+              </div>
+            </Link>
 
-          <ul className="hidden min-w-0 items-center lg:flex">
+            <button
+              type="button"
+              className="rounded-[8px] p-2 text-bark lg:hidden"
+              onClick={() => setMobileOpen(true)}
+              aria-label="Open menu"
+              aria-expanded={mobileOpen}
+              aria-haspopup="dialog"
+            >
+              <Menu className="h-6 w-6" />
+            </button>
+          </div>
+
+          <ul className="hidden items-center justify-between gap-1 border-t border-mist lg:flex">
             {items.map((item, index) => {
               const hasChildren = item.children.length > 0;
               const open = openId === item.id;
@@ -174,7 +189,7 @@ export function Navbar({
                       aria-expanded={open}
                       aria-haspopup="true"
                       onClick={() => setOpenId(open ? null : item.id)}
-                      className={`relative flex items-center gap-1 whitespace-nowrap px-2.5 py-6 text-sm font-medium transition-colors xl:px-3.5 ${
+                      className={`relative flex items-center gap-1 whitespace-nowrap px-2 py-3.5 text-sm font-medium transition-colors xl:px-3 ${
                         active || open ? "text-deodar" : "text-bark/80 hover:text-deodar"
                       }`}
                     >
@@ -188,7 +203,7 @@ export function Navbar({
                       {active && (
                         <motion.span
                           layoutId="nav-underline"
-                          className="absolute inset-x-3 bottom-4 h-0.5 rounded bg-resin"
+                          className="absolute inset-x-2 bottom-2.5 h-0.5 rounded bg-resin xl:inset-x-3"
                           transition={{ type: "spring", stiffness: 380, damping: 30 }}
                         />
                       )}
@@ -196,7 +211,7 @@ export function Navbar({
                   ) : item.href ? (
                     <Link
                       href={item.href}
-                      className={`relative block whitespace-nowrap px-2.5 py-6 text-sm font-medium transition-colors xl:px-3.5 ${
+                      className={`relative block whitespace-nowrap px-2 py-3.5 text-sm font-medium transition-colors xl:px-3 ${
                         active ? "text-deodar" : "text-bark/80 hover:text-deodar"
                       }`}
                     >
@@ -204,7 +219,7 @@ export function Navbar({
                       {active && (
                         <motion.span
                           layoutId="nav-underline"
-                          className="absolute inset-x-3 bottom-4 h-0.5 rounded bg-resin"
+                          className="absolute inset-x-2 bottom-2.5 h-0.5 rounded bg-resin xl:inset-x-3"
                           transition={{ type: "spring", stiffness: 380, damping: 30 }}
                         />
                       )}
@@ -249,17 +264,6 @@ export function Navbar({
               );
             })}
           </ul>
-
-          <button
-            type="button"
-            className="rounded-[8px] p-2 text-bark lg:hidden"
-            onClick={() => setMobileOpen(true)}
-            aria-label="Open menu"
-            aria-expanded={mobileOpen}
-            aria-haspopup="dialog"
-          >
-            <Menu className="h-6 w-6" />
-          </button>
         </nav>
       </motion.header>
 
