@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import {
   useForm,
@@ -11,6 +11,7 @@ import {
 } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { z } from "zod";
+import slugify from "slugify";
 import { toast } from "sonner";
 import type { ActionResult } from "@/server/actions/types";
 import { cn } from "@/lib/utils";
@@ -53,6 +54,9 @@ type Props<T extends FieldValues> = {
   submitLabel?: string;
   preview?: (values: T) => ReactNode;
   showLanguageTabs?: boolean;
+  onCancel?: () => void;
+  /** When true, keeps `slug` in sync with `name` until the user edits the slug. */
+  autoSlug?: boolean;
 };
 
 export function ResourceForm<T extends FieldValues>({
@@ -63,10 +67,20 @@ export function ResourceForm<T extends FieldValues>({
   submitLabel = "Save",
   preview,
   showLanguageTabs = false,
+  onCancel,
+  autoSlug = false,
 }: Props<T>) {
   const router = useRouter();
   const [tab, setTab] = useState<"en" | "ur">("en");
   const [pending, startTransition] = useTransition();
+  const slugTouched = useRef(
+    Boolean(
+      defaultValues &&
+        "slug" in defaultValues &&
+        typeof (defaultValues as { slug?: unknown }).slug === "string" &&
+        String((defaultValues as { slug?: string }).slug).length > 0
+    )
+  );
   const form = useForm<T>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(schema as any),
@@ -78,10 +92,19 @@ export function ResourceForm<T extends FieldValues>({
     control,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors, isDirty, isSubmitting },
   } = form;
 
   const values = watch();
+  const nameValue = watch("name" as Path<T>);
+
+  useEffect(() => {
+    if (!autoSlug || slugTouched.current) return;
+    if (typeof nameValue !== "string") return;
+    const next = slugify(nameValue, { lower: true, strict: true });
+    setValue("slug" as Path<T>, next as never, { shouldDirty: false });
+  }, [autoSlug, nameValue, setValue]);
 
   useEffect(() => {
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -211,7 +234,14 @@ export function ResourceForm<T extends FieldValues>({
                   }
                   className={inputClass(!!error)}
                   placeholder={field.placeholder}
-                  {...register(field.name)}
+                  {...register(field.name, {
+                    onChange: (e) => {
+                      if (autoSlug && String(field.name) === "slug") {
+                        slugTouched.current = true;
+                      }
+                      return e;
+                    },
+                  })}
                 />
               )}
 
@@ -235,7 +265,7 @@ export function ResourceForm<T extends FieldValues>({
           <button
             type="button"
             className="h-10 rounded-[8px] border border-mist px-5 text-sm text-bark"
-            onClick={() => router.back()}
+            onClick={() => (onCancel ? onCancel() : router.back())}
           >
             Cancel
           </button>

@@ -2,18 +2,12 @@ import { Role } from "@prisma/client";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import {
-  NavTreeEditor,
+  NavigationEditor,
   type NavTreeNode,
-} from "@/components/dashboard/navigation/nav-tree";
+} from "@/components/dashboard/navigation/navigation-editor";
 
 export default async function NavigationDashboardPage() {
-  await requireRole(
-    Role.SUPER_ADMIN,
-    Role.REGION_ADMIN,
-    Role.CIRCLE_ADMIN,
-    Role.DIVISION_ADMIN,
-    Role.EDITOR
-  );
+  await requireRole(Role.SUPER_ADMIN);
 
   const items = await prisma.navItem.findMany({
     where: { parentId: null },
@@ -50,15 +44,16 @@ export default async function NavigationDashboardPage() {
   }));
 
   return (
-    <div className="mx-auto max-w-[900px] space-y-6">
+    <div className="mx-auto max-w-[1200px] space-y-6">
       <div>
         <p className="eyebrow text-resin">Content</p>
         <h1 className="mt-1 font-display text-2xl text-bark">Navigation</h1>
         <p className="mt-1 text-sm text-moss">
-          Drag to reorder. Parents with children warn before delete.
+          Two-level tree. Drag to reorder. Parents with children cannot be deleted until
+          children are removed.
         </p>
       </div>
-      <NavTreeEditor roots={roots} />
+      <NavigationEditor roots={roots} />
     </div>
   );
 }

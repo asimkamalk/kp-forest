@@ -71,7 +71,7 @@ export const dashboardNav: DashboardNavGroup[] = [
   {
     label: "Content",
     items: [
-      { label: "Navigation", href: "/dashboard/navigation", icon: Navigation, roles: CONTENT },
+      { label: "Navigation", href: "/dashboard/navigation", icon: Navigation, roles: SUPER_ONLY },
       { label: "Hero Slides", href: "/dashboard/hero", icon: ImageIcon, roles: CONTENT },
       { label: "Messages", href: "/dashboard/messages", icon: MessageSquare, roles: CONTENT },
       { label: "Pages", href: "/dashboard/pages", icon: FileText, roles: CONTENT },
