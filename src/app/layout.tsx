@@ -17,6 +17,7 @@ const nastaliq = Noto_Nastaliq_Urdu({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.APP_URL ?? "http://localhost:3000"),
   title: "Forest Department, Khyber Pakhtunkhwa",
   description: "Official portal of the Forest Department, Government of Khyber Pakhtunkhwa",
 };

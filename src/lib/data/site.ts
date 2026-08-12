@@ -1,6 +1,11 @@
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { DownloadKind, PublishStatus } from "@prisma/client";
+import {
+  DownloadKind,
+  MediaKind,
+  ProjectStatus,
+  PublishStatus,
+} from "@prisma/client";
 
 const PUBLISHED = { status: PublishStatus.PUBLISHED } as const;
 
@@ -321,6 +326,518 @@ export const getDownloads = unstable_cache(
     }),
   ["downloads-all"],
   { tags: ["downloads"], revalidate: 300 }
+);
+
+/* --------------------------- CONTACT DIRECTORY --------------------------- */
+
+export type DirectoryContact = {
+  id: string;
+  name: string;
+  designation: string;
+  phone: string | null;
+  email: string | null;
+  regionName: string;
+  regionId: string;
+  circleName: string;
+  circleId: string;
+  divisionName: string;
+  divisionId: string;
+};
+
+export const getContactDirectory = unstable_cache(
+  async (): Promise<DirectoryContact[]> => {
+    const rows = await prisma.contactPerson.findMany({
+      where: PUBLISHED,
+      orderBy: [{ orderIndex: "asc" }, { name: "asc" }],
+      select: {
+        id: true,
+        name: true,
+        designation: true,
+        phone: true,
+        mobile: true,
+        email: true,
+        division: {
+          select: {
+            id: true,
+            name: true,
+            status: true,
+            circle: {
+              select: {
+                id: true,
+                name: true,
+                status: true,
+                region: {
+                  select: { id: true, name: true, status: true },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return rows
+      .filter(
+        (r) =>
+          r.division &&
+          r.division.status === PublishStatus.PUBLISHED &&
+          r.division.circle.status === PublishStatus.PUBLISHED &&
+          r.division.circle.region.status === PublishStatus.PUBLISHED
+      )
+      .map((r) => ({
+        id: r.id,
+        name: r.name,
+        designation: r.designation,
+        phone: r.phone ?? r.mobile,
+        email: r.email,
+        regionName: r.division!.circle.region.name,
+        regionId: r.division!.circle.region.id,
+        circleName: r.division!.circle.name,
+        circleId: r.division!.circle.id,
+        divisionName: r.division!.name,
+        divisionId: r.division!.id,
+      }));
+  },
+  ["contact-directory"],
+  { tags: ["contacts"], revalidate: 3600 }
+);
+
+/* ------------------------------ MEDIA CENTRE ----------------------------- */
+
+export type LatestMediaItem = {
+  id: string;
+  slug: string;
+  kind: MediaKind;
+  title: string;
+  summary: string | null;
+  coverImage: string | null;
+  publishedAt: Date | null;
+};
+
+export const getLatestMedia = unstable_cache(
+  async (): Promise<LatestMediaItem[]> =>
+    prisma.mediaPost.findMany({
+      where: {
+        ...PUBLISHED,
+        kind: { in: [MediaKind.PRESS_RELEASE, MediaKind.NEWS_COVERAGE] },
+      },
+      orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }],
+      take: 4,
+      select: {
+        id: true,
+        slug: true,
+        kind: true,
+        title: true,
+        summary: true,
+        coverImage: true,
+        publishedAt: true,
+      },
+    }),
+  ["latest-media"],
+  { tags: ["media"], revalidate: 300 }
+);
+
+const PRESS_PAGE_SIZE = 12;
+
+export type PressReleaseListItem = {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string | null;
+  publishedAt: Date | null;
+};
+
+export async function getPressReleasesPage(page: number): Promise<{
+  items: PressReleaseListItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}> {
+  const safePage = Math.max(1, page);
+  return unstable_cache(
+    async () => {
+      const where = { ...PUBLISHED, kind: MediaKind.PRESS_RELEASE };
+      const [total, items] = await Promise.all([
+        prisma.mediaPost.count({ where }),
+        prisma.mediaPost.findMany({
+          where,
+          orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }],
+          skip: (safePage - 1) * PRESS_PAGE_SIZE,
+          take: PRESS_PAGE_SIZE,
+          select: {
+            id: true,
+            slug: true,
+            title: true,
+            summary: true,
+            publishedAt: true,
+          },
+        }),
+      ]);
+      return {
+        items,
+        total,
+        page: safePage,
+        pageSize: PRESS_PAGE_SIZE,
+        totalPages: Math.max(1, Math.ceil(total / PRESS_PAGE_SIZE)),
+      };
+    },
+    ["press-releases-page", String(safePage)],
+    { tags: ["media"], revalidate: 300 }
+  )();
+}
+
+export async function getPressReleaseBySlug(slug: string) {
+  return unstable_cache(
+    async () =>
+      prisma.mediaPost.findFirst({
+        where: { slug, kind: MediaKind.PRESS_RELEASE, ...PUBLISHED },
+      }),
+    ["press-release-by-slug", slug],
+    { tags: ["media"], revalidate: 300 }
+  )();
+}
+
+export const getPublishedPressReleaseSlugs = unstable_cache(
+  async () =>
+    prisma.mediaPost.findMany({
+      where: { ...PUBLISHED, kind: MediaKind.PRESS_RELEASE },
+      select: { slug: true },
+    }),
+  ["press-release-slugs"],
+  { tags: ["media"], revalidate: 300 }
+);
+
+export type PublicAlbumCard = {
+  id: string;
+  slug: string;
+  title: string;
+  description: string | null;
+  coverImage: string | null;
+  imageCount: number;
+  divisionName: string | null;
+  regionId: string | null;
+  regionName: string | null;
+};
+
+export const getPublishedAlbums = unstable_cache(
+  async (): Promise<PublicAlbumCard[]> =>
+    prisma.galleryAlbum
+      .findMany({
+        where: PUBLISHED,
+        orderBy: [{ orderIndex: "asc" }, { title: "asc" }],
+        include: {
+          _count: { select: { images: true } },
+          division: {
+            select: {
+              name: true,
+              circle: {
+                select: {
+                  region: { select: { id: true, name: true } },
+                },
+              },
+            },
+          },
+          circle: {
+            select: { region: { select: { id: true, name: true } } },
+          },
+          region: { select: { id: true, name: true } },
+        },
+      })
+      .then((rows) =>
+        rows.map((a) => {
+          const region =
+            a.region ?? a.circle?.region ?? a.division?.circle.region ?? null;
+          return {
+            id: a.id,
+            slug: a.slug,
+            title: a.title,
+            description: a.description,
+            coverImage: a.coverImage,
+            imageCount: a._count.images,
+            divisionName: a.division?.name ?? null,
+            regionId: region?.id ?? null,
+            regionName: region?.name ?? null,
+          };
+        })
+      ),
+  ["gallery-albums"],
+  { tags: ["media"], revalidate: 300 }
+);
+
+export async function getAlbumBySlug(slug: string) {
+  return unstable_cache(
+    async () =>
+      prisma.galleryAlbum.findFirst({
+        where: { slug, ...PUBLISHED },
+        include: {
+          division: {
+            select: {
+              name: true,
+              circle: {
+                select: {
+                  name: true,
+                  region: { select: { id: true, name: true, slug: true } },
+                },
+              },
+            },
+          },
+          images: {
+            orderBy: { orderIndex: "asc" },
+            include: {
+              asset: {
+                select: {
+                  id: true,
+                  url: true,
+                  alt: true,
+                  fileName: true,
+                },
+              },
+            },
+          },
+        },
+      }),
+    ["gallery-album-by-slug", slug],
+    { tags: ["media"], revalidate: 300 }
+  )();
+}
+
+export const getPublishedAlbumSlugs = unstable_cache(
+  async () =>
+    prisma.galleryAlbum.findMany({
+      where: PUBLISHED,
+      select: { slug: true },
+    }),
+  ["gallery-album-slugs"],
+  { tags: ["media"], revalidate: 300 }
+);
+
+export type PublicVideoCard = {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string | null;
+  coverImage: string | null;
+  videoUrl: string;
+  publishedAt: Date | null;
+};
+
+export const getPublishedVideos = unstable_cache(
+  async (): Promise<PublicVideoCard[]> =>
+    prisma.mediaPost
+      .findMany({
+        where: {
+          ...PUBLISHED,
+          videoUrl: { not: null },
+        },
+        orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }],
+        select: {
+          id: true,
+          slug: true,
+          title: true,
+          summary: true,
+          coverImage: true,
+          videoUrl: true,
+          publishedAt: true,
+        },
+      })
+      .then((rows) =>
+        rows
+          .filter((r): r is typeof r & { videoUrl: string } => Boolean(r.videoUrl))
+          .map((r) => ({
+            id: r.id,
+            slug: r.slug,
+            title: r.title,
+            summary: r.summary,
+            coverImage: r.coverImage,
+            videoUrl: r.videoUrl,
+            publishedAt: r.publishedAt,
+          }))
+      ),
+  ["media-videos"],
+  { tags: ["media"], revalidate: 300 }
+);
+
+export type PublicNewsCard = {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string | null;
+  sourceName: string | null;
+  sourceUrl: string | null;
+  publishedAt: Date | null;
+};
+
+export const getPublishedNewsCoverage = unstable_cache(
+  async (): Promise<PublicNewsCard[]> =>
+    prisma.mediaPost.findMany({
+      where: { ...PUBLISHED, kind: MediaKind.NEWS_COVERAGE },
+      orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }],
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        summary: true,
+        sourceName: true,
+        sourceUrl: true,
+        publishedAt: true,
+      },
+    }),
+  ["media-news"],
+  { tags: ["media"], revalidate: 300 }
+);
+
+/* -------------------------------- PROJECTS ------------------------------- */
+
+export type FeaturedProject = {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string | null;
+  coverImage: string | null;
+  progressPct: number;
+  costPkr: number | null;
+};
+
+export const getFeaturedProjects = unstable_cache(
+  async (): Promise<FeaturedProject[]> =>
+    prisma.project.findMany({
+      where: {
+        ...PUBLISHED,
+        projectStatus: ProjectStatus.ONGOING,
+      },
+      orderBy: { progressPct: "desc" },
+      take: 3,
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        summary: true,
+        coverImage: true,
+        progressPct: true,
+        costPkr: true,
+      },
+    }),
+  ["featured-projects"],
+  { tags: ["projects"], revalidate: 300 }
+);
+
+export type PublicProjectCard = {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string | null;
+  projectStatus: ProjectStatus;
+  costPkr: number | null;
+  startDate: Date | null;
+  endDate: Date | null;
+  progressPct: number;
+  coverImage: string | null;
+  regionId: string | null;
+  regionName: string | null;
+};
+
+export async function getProjectsByStatus(
+  projectStatus: ProjectStatus
+): Promise<PublicProjectCard[]> {
+  return unstable_cache(
+    async () =>
+      prisma.project.findMany({
+        where: { ...PUBLISHED, projectStatus },
+        orderBy: [{ progressPct: "desc" }, { title: "asc" }],
+        select: {
+          id: true,
+          slug: true,
+          title: true,
+          summary: true,
+          projectStatus: true,
+          costPkr: true,
+          startDate: true,
+          endDate: true,
+          progressPct: true,
+          coverImage: true,
+          regionId: true,
+          region: { select: { id: true, name: true } },
+          circle: { select: { region: { select: { id: true, name: true } } } },
+          division: {
+            select: {
+              circle: { select: { region: { select: { id: true, name: true } } } },
+            },
+          },
+        },
+      }).then((rows) =>
+        rows.map((r) => {
+          const region =
+            r.region ??
+            r.circle?.region ??
+            r.division?.circle.region ??
+            null;
+          return {
+            id: r.id,
+            slug: r.slug,
+            title: r.title,
+            summary: r.summary,
+            projectStatus: r.projectStatus,
+            costPkr: r.costPkr,
+            startDate: r.startDate,
+            endDate: r.endDate,
+            progressPct: r.progressPct,
+            coverImage: r.coverImage,
+            regionId: region?.id ?? r.regionId,
+            regionName: region?.name ?? null,
+          };
+        })
+      ),
+    ["projects-by-status", projectStatus],
+    { tags: ["projects"], revalidate: 300 }
+  )();
+}
+
+export async function getProjectBySlug(slug: string) {
+  return unstable_cache(
+    async () =>
+      prisma.project.findFirst({
+        where: { slug, ...PUBLISHED },
+        include: {
+          region: { select: { id: true, slug: true, name: true } },
+          circle: {
+            select: {
+              id: true,
+              slug: true,
+              name: true,
+              region: { select: { id: true, slug: true, name: true } },
+            },
+          },
+          division: {
+            select: {
+              id: true,
+              slug: true,
+              name: true,
+              circle: {
+                select: {
+                  id: true,
+                  slug: true,
+                  name: true,
+                  region: { select: { id: true, slug: true, name: true } },
+                },
+              },
+            },
+          },
+        },
+      }),
+    ["project-by-slug", slug],
+    { tags: ["projects"], revalidate: 300 }
+  )();
+}
+
+export const getPublishedProjectSlugs = unstable_cache(
+  async () =>
+    prisma.project.findMany({
+      where: PUBLISHED,
+      select: { slug: true },
+    }),
+  ["project-slugs"],
+  { tags: ["projects"], revalidate: 300 }
 );
 
 /* ------------------------------ SITE SETTINGS ---------------------------- */

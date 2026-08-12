@@ -16,7 +16,7 @@ export async function RegionsSection() {
   if (regions.length === 0) return null;
 
   return (
-    <section aria-labelledby="regions-heading" className="bg-paper py-16 md:py-24">
+    <section aria-labelledby="regions-heading" className="bg-white py-16 md:py-24">
       <div className="mx-auto max-w-[1200px] px-6">
         <div className="max-w-2xl">
           <p className="eyebrow text-resin">Organisation</p>

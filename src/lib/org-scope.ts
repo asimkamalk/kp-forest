@@ -45,6 +45,61 @@ export function divisionWhere(session: Session): Prisma.DivisionWhereInput {
   return { id: "__no_scope__" };
 }
 
+export function projectWhere(session: Session): Prisma.ProjectWhereInput {
+  const scope = scopeFilter(session);
+  if (Object.keys(scope).length === 0) return {};
+  if (typeof scope.regionId === "string") {
+    return {
+      OR: [
+        { regionId: scope.regionId },
+        { circle: { regionId: scope.regionId } },
+        { division: { circle: { regionId: scope.regionId } } },
+      ],
+    };
+  }
+  if (typeof scope.circleId === "string") {
+    return {
+      OR: [
+        { circleId: scope.circleId },
+        { division: { circleId: scope.circleId } },
+      ],
+    };
+  }
+  if (typeof scope.divisionId === "string") {
+    return { divisionId: scope.divisionId };
+  }
+  if (typeof scope.id === "string") return { id: scope.id };
+  return { id: "__no_scope__" };
+}
+
+/** Gallery albums scoped by division ownership (and parent region/circle). */
+export function galleryAlbumWhere(session: Session): Prisma.GalleryAlbumWhereInput {
+  const scope = scopeFilter(session);
+  if (Object.keys(scope).length === 0) return {};
+  if (typeof scope.regionId === "string") {
+    return {
+      OR: [
+        { regionId: scope.regionId },
+        { circle: { regionId: scope.regionId } },
+        { division: { circle: { regionId: scope.regionId } } },
+      ],
+    };
+  }
+  if (typeof scope.circleId === "string") {
+    return {
+      OR: [
+        { circleId: scope.circleId },
+        { division: { circleId: scope.circleId } },
+      ],
+    };
+  }
+  if (typeof scope.divisionId === "string") {
+    return { divisionId: scope.divisionId };
+  }
+  if (typeof scope.id === "string") return { id: scope.id };
+  return { id: "__no_scope__" };
+}
+
 /** Aliases used by older call sites. */
 export function regionScopeWhere(user: SessionUser): Prisma.RegionWhereInput {
   return regionWhere({ user });

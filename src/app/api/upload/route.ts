@@ -7,6 +7,15 @@ import { detectFileSignature } from "@/lib/file-signature";
 
 const IMAGE_MAX_BYTES = 5 * 1024 * 1024;
 const DOCUMENT_MAX_BYTES = 20 * 1024 * 1024;
+const UPLOAD_ROOT = path.join(process.cwd(), "public", "uploads");
+
+function resolveUnderUploadRoot(...segments: string[]): string | null {
+  const resolved = path.resolve(UPLOAD_ROOT, ...segments);
+  const root = path.resolve(UPLOAD_ROOT);
+  const prefix = root.endsWith(path.sep) ? root : root + path.sep;
+  if (resolved !== root && !resolved.startsWith(prefix)) return null;
+  return resolved;
+}
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -42,14 +51,13 @@ export async function POST(request: Request) {
     );
   }
 
-  const uploadDir = process.env.UPLOAD_DIR || "./public/uploads";
-  const absDir = path.isAbsolute(uploadDir)
-    ? uploadDir
-    : path.join(process.cwd(), uploadDir);
-  await mkdir(absDir, { recursive: true });
+  await mkdir(UPLOAD_ROOT, { recursive: true });
 
   const safeName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${detected.extension}`;
-  const absPath = path.join(absDir, safeName);
+  const absPath = resolveUnderUploadRoot(safeName);
+  if (!absPath) {
+    return NextResponse.json({ ok: false, error: "Invalid upload path" }, { status: 400 });
+  }
   await writeFile(absPath, buffer);
 
   const publicUrl = `/uploads/${safeName}`;

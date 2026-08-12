@@ -99,13 +99,20 @@ export function ResourceForm<T extends FieldValues>({
 
   const values = watch();
   const nameValue = watch("name" as Path<T>);
+  const titleValue = watch("title" as Path<T>);
 
   useEffect(() => {
     if (!autoSlug || slugTouched.current) return;
-    if (typeof nameValue !== "string") return;
-    const next = slugify(nameValue, { lower: true, strict: true });
+    const source =
+      typeof nameValue === "string" && nameValue.length > 0
+        ? nameValue
+        : typeof titleValue === "string"
+          ? titleValue
+          : null;
+    if (!source) return;
+    const next = slugify(source, { lower: true, strict: true });
     setValue("slug" as Path<T>, next as never, { shouldDirty: false });
-  }, [autoSlug, nameValue, setValue]);
+  }, [autoSlug, nameValue, titleValue, setValue]);
 
   useEffect(() => {
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
