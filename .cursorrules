@@ -1,0 +1,60 @@
+# PROJECT
+Official web portal for the Forest Department, Government of Khyber Pakhtunkhwa, Pakistan.
+Public-sector website. Bilingual (English + Urdu). Must be fully dynamic — every piece of
+content, including navigation links and hero slides, is editable from an admin dashboard.
+Nothing is hardcoded in JSX.
+
+# STACK — do not substitute
+- Next.js 15, App Router, TypeScript strict mode, src/ directory, alias "@/*"
+- PostgreSQL + Prisma ORM
+- Tailwind CSS + shadcn/ui (components copied into repo, no external UI dependency)
+- Auth.js v5 (next-auth beta) — Credentials provider + bcryptjs. No OAuth providers.
+- Framer Motion for animation, Lenis for smooth scroll
+- react-hook-form + Zod (one Zod schema validates both client and server)
+- TanStack Table for dashboard tables
+- MapLibre GL for maps (no API key, no billing account)
+- lucide-react for icons
+
+# ARCHITECTURE RULES
+1. Components NEVER import prisma directly.
+   - Reads  -> src/lib/data/*.ts, wrapped in unstable_cache with a tag
+   - Writes -> src/server/actions/*.ts, "use server", Zod-validated, then revalidateTag()
+2. Default to Server Components. Add "use client" only for interactivity
+   (state, effects, event handlers, framer-motion).
+3. Every content model has: status (DRAFT|REVIEW|PUBLISHED|ARCHIVED) and orderIndex.
+   Public queries ALWAYS filter status: "PUBLISHED".
+4. Every user-facing text field has an Urdu twin (nameUr, titleUr, bodyUr...).
+5. Row-level access control lives in src/lib/auth.ts via scopeFilter(session).
+   Never enforce permissions in the UI only.
+6. Every dashboard write creates an AuditLog row (userId, action, entity, before, after).
+7. Slugs are unique per parent, not globally: @@unique([regionId, slug]).
+8. All images use next/image. All links use next/link.
+9. No `any`. No `@ts-ignore`. Export inferred types from Zod schemas.
+10. Server actions return { ok: true, data } | { ok: false, error } — never throw to the client.
+
+# ANIMATION RULES
+- Only animate transform and opacity. Never width/height/top/left.
+- Every animation respects useReducedMotion() from framer-motion.
+- Use the shared primitives in src/components/motion/reveal.tsx
+  (Reveal, Stagger, StaggerItem, AnimatedHeading). Do not write one-off variants.
+- Shared easing everywhere: [0.22, 1, 0.36, 1].
+- Animation is subtle and institutional. This is a government site, not a portfolio.
+
+# ACCESSIBILITY (this WILL be audited)
+- WCAG 2.1 AA. Real <button>/<a> elements, never clickable divs.
+- Visible focus rings. Keyboard-navigable dropdowns. Escape closes overlays.
+- aria-expanded / aria-haspopup on menu triggers. alt text on every image.
+- Text contrast ratio >= 4.5:1.
+
+# PERFORMANCE
+Many users are on 3G mobile. No hero videos. No animation libraries beyond framer-motion.
+Lazy-load below-the-fold sections. Keep the homepage JS bundle under 200KB.
+
+# DESIGN LANGUAGE
+Forest green primary (#166534), gold accent (#ca8a04), warm neutrals, generous whitespace.
+Institutional and trustworthy. Rounded-xl cards, soft shadows, no gradients on text,
+no glassmorphism, no neon. Inter for English, Noto Nastaliq Urdu for Urdu.
+
+# WHEN UNSURE
+Ask before inventing a new model, route, or dependency. Prefer editing existing files
+over creating parallel ones. Never scaffold placeholder pages I did not ask for.

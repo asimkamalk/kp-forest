@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+
+# Build output
+.next/
+out/
+build/
+dist/
+
+# Generated Prisma client and migration SQL
+prisma/migrations/
+src/generated/
+
+# Uploaded media — binary, and can grow large
+public/uploads/
+
+# Lockfiles — huge, and Cursor never needs to read them
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Environment secrets
+.env
+.env.local
+.env.production
+
+# Logs and OS noise
+*.log
+.DS_Store
+Thumbs.db
+
+# Images and binaries
+public/images/
+*.zip
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.ico
+*.pdf
