@@ -79,6 +79,35 @@ body {
   border-radius: 4px;
 }
 
+/* Dark sidebar — thin, bark-tinted scrollbar (no OS chrome arrows) */
+.sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(125 155 106 / 0.45) transparent;
+}
+
+.sidebar-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background-color: rgb(125 155 106 / 0.45);
+  border-radius: 999px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(125 155 106 / 0.7);
+}
+
+.sidebar-scroll::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

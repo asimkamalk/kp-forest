@@ -39,6 +39,27 @@ const LatestNews = dynamic(
   }
 );
 
+const LatestDownloadsSection = dynamic(
+  () =>
+    import("@/components/site/latest-downloads-section").then(
+      (m) => m.LatestDownloadsSection
+    ),
+  {
+    loading: () => (
+      <div className="bg-paper py-16 md:py-24" aria-hidden>
+        <div className="mx-auto max-w-[1200px] px-6">
+          <div className="h-8 w-56 animate-pulse rounded bg-mist" />
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="h-36 animate-pulse rounded-[12px] bg-mist" />
+            ))}
+          </div>
+        </div>
+      </div>
+    ),
+  }
+);
+
 const CtaBand = dynamic(
   () => import("@/components/site/cta-band").then((m) => m.CtaBand),
   {
@@ -62,6 +83,7 @@ export default function Home() {
       <LazySectionDivider />
       <FeaturedProjects />
       <LatestNews />
+      <LatestDownloadsSection />
       <CtaBand />
     </main>
   );

@@ -328,6 +328,28 @@ export const getDownloads = unstable_cache(
   { tags: ["downloads"], revalidate: 300 }
 );
 
+export const getLatestDownloads = unstable_cache(
+  async (): Promise<PublicDownload[]> =>
+    prisma.download.findMany({
+      where: PUBLISHED,
+      orderBy: [{ documentDate: "desc" }, { orderIndex: "asc" }, { title: "asc" }],
+      take: 6,
+      select: {
+        id: true,
+        title: true,
+        titleUr: true,
+        kind: true,
+        description: true,
+        fileUrl: true,
+        fileSize: true,
+        documentDate: true,
+        downloadCount: true,
+      },
+    }),
+  ["latest-downloads"],
+  { tags: ["downloads"], revalidate: 300 }
+);
+
 /* --------------------------- CONTACT DIRECTORY --------------------------- */
 
 export type DirectoryContact = {
@@ -850,4 +872,206 @@ export const getSiteSettings = unstable_cache(
   },
   ["site-settings"],
   { tags: ["settings"], revalidate: 3600 }
+);
+
+/* --------------------------------- PAGES -------------------------------- */
+
+export async function getPageBySlug(slug: string) {
+  return unstable_cache(
+    async () =>
+      prisma.page.findFirst({
+        where: { slug, ...PUBLISHED },
+        select: {
+          id: true,
+          slug: true,
+          title: true,
+          titleUr: true,
+          body: true,
+          bodyUr: true,
+          coverImage: true,
+        },
+      }),
+    ["page", slug],
+    { tags: ["pages", `page:${slug}`], revalidate: 3600 }
+  )();
+}
+
+/* -------------------------- EMERGENCY CONTACTS --------------------------- */
+
+export type EmergencyContact = {
+  id: string;
+  name: string;
+  designation: string;
+  phone: string | null;
+  divisionName: string | null;
+  regionName: string;
+  regionId: string;
+};
+
+export type EmergencyRegionGroup = {
+  regionId: string;
+  regionName: string;
+  contacts: EmergencyContact[];
+};
+
+export const getEmergencyContacts = unstable_cache(
+  async (): Promise<EmergencyRegionGroup[]> => {
+    const rows = await prisma.contactPerson.findMany({
+      where: { ...PUBLISHED, isEmergency: true },
+      orderBy: [{ orderIndex: "asc" }, { name: "asc" }],
+      select: {
+        id: true,
+        name: true,
+        designation: true,
+        phone: true,
+        mobile: true,
+        division: {
+          select: {
+            name: true,
+            status: true,
+            circle: {
+              select: {
+                status: true,
+                region: {
+                  select: { id: true, name: true, status: true, orderIndex: true },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const groups = new Map<string, EmergencyRegionGroup>();
+
+    for (const r of rows) {
+      const region = r.division?.circle.region;
+      if (
+        !r.division ||
+        r.division.status !== PublishStatus.PUBLISHED ||
+        r.division.circle.status !== PublishStatus.PUBLISHED ||
+        !region ||
+        region.status !== PublishStatus.PUBLISHED
+      ) {
+        continue;
+      }
+
+      const phone = r.phone ?? r.mobile;
+      let group = groups.get(region.id);
+      if (!group) {
+        group = {
+          regionId: region.id,
+          regionName: region.name,
+          contacts: [],
+        };
+        groups.set(region.id, group);
+      }
+
+      group.contacts.push({
+        id: r.id,
+        name: r.name,
+        designation: r.designation,
+        phone,
+        divisionName: r.division.name,
+        regionName: region.name,
+        regionId: region.id,
+      });
+    }
+
+    return Array.from(groups.values()).sort((a, b) =>
+      a.regionName.localeCompare(b.regionName)
+    );
+  },
+  ["emergency-contacts"],
+  { tags: ["contacts"], revalidate: 300 }
+);
+
+/* --------------------------- KNOW YOUR FOREST ---------------------------- */
+
+export type KnowYourForestCard = {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string | null;
+  coverImage: string | null;
+};
+
+export const getKnowYourForestArticles = unstable_cache(
+  async (): Promise<KnowYourForestCard[]> =>
+    prisma.knowYourForestArticle.findMany({
+      where: PUBLISHED,
+      orderBy: [{ orderIndex: "asc" }, { title: "asc" }],
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        summary: true,
+        coverImage: true,
+      },
+    }),
+  ["know-your-forest"],
+  { tags: ["know-your-forest"], revalidate: 3600 }
+);
+
+export async function getKnowYourForestBySlug(slug: string) {
+  return unstable_cache(
+    async () =>
+      prisma.knowYourForestArticle.findFirst({
+        where: { slug, ...PUBLISHED },
+        select: {
+          id: true,
+          slug: true,
+          title: true,
+          titleUr: true,
+          summary: true,
+          body: true,
+          coverImage: true,
+        },
+      }),
+    ["know-your-forest", slug],
+    { tags: ["know-your-forest", `kyf:${slug}`], revalidate: 3600 }
+  )();
+}
+
+export const getPublishedKnowYourForestSlugs = unstable_cache(
+  async () =>
+    prisma.knowYourForestArticle.findMany({
+      where: PUBLISHED,
+      select: { slug: true },
+    }),
+  ["know-your-forest-slugs"],
+  { tags: ["know-your-forest"], revalidate: 3600 }
+);
+
+/* ------------------------------- WILDLIFE -------------------------------- */
+
+export type WildlifeSpeciesCard = {
+  id: string;
+  slug: string;
+  commonName: string;
+  scientificName: string | null;
+  category: string | null;
+  conservationStatus: string | null;
+  habitat: string | null;
+  imageUrl: string | null;
+};
+
+export const getWildlifeSpecies = unstable_cache(
+  async (): Promise<WildlifeSpeciesCard[]> =>
+    prisma.wildlifeSpecies.findMany({
+      where: PUBLISHED,
+      orderBy: [{ commonName: "asc" }],
+      select: {
+        id: true,
+        slug: true,
+        commonName: true,
+        scientificName: true,
+        category: true,
+        conservationStatus: true,
+        habitat: true,
+        imageUrl: true,
+      },
+    }),
+  ["wildlife-species"],
+  { tags: ["wildlife"], revalidate: 3600 }
 );

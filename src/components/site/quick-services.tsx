@@ -37,7 +37,7 @@ const SERVICES: {
     icon: FlaskConical,
   },
   {
-    href: "/downloads/publications",
+    href: "/downloads",
     label: "Downloads",
     description: "Publications, forms, acts, rules and notifications.",
     icon: Download,

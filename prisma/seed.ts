@@ -468,6 +468,124 @@ async function seedSite() {
       ],
     });
   }
+
+  const cmsPages = [
+    {
+      slug: "free-plant-scheme",
+      title: "Free plant scheme",
+      body: [
+        "Citizens, schools and community organisations can request saplings from departmental nurseries under the free plant scheme.",
+        "Submit this form with your district, preferred species and planting purpose. After approval you will be told which nursery to collect from and when stock is ready. Bring your ticket number and a valid CNIC.",
+        "Collection is free. Planting and aftercare remain the requester's responsibility.",
+      ].join("\n\n"),
+      orderIndex: 0,
+    },
+    {
+      slug: "forest-fire-reporting",
+      title: "Reporting a forest fire",
+      body: [
+        "If you see smoke or flame in a forest area, call the departmental helpline immediately. Give the nearest landmark, village or road and a rough direction from there.",
+        "Do not enter a burning compartment. Keep clear of roads used by fire crews. If you can do so safely, note the wind direction and whether the fire is moving uphill.",
+        "Use the regional emergency numbers below when the helpline is busy or when an officer asks you to coordinate locally.",
+      ].join("\n\n"),
+      orderIndex: 1,
+    },
+  ] as const;
+
+  for (const page of cmsPages) {
+    await prisma.page.upsert({
+      where: { slug: page.slug },
+      update: {
+        title: page.title,
+        body: page.body,
+        orderIndex: page.orderIndex,
+        status: PublishStatus.PUBLISHED,
+      },
+      create: {
+        ...page,
+        status: PublishStatus.PUBLISHED,
+      },
+    });
+  }
+
+  if ((await prisma.knowYourForestArticle.count()) === 0) {
+    await prisma.knowYourForestArticle.createMany({
+      data: [
+        {
+          slug: "chir-pine-forests",
+          title: "Chir pine forests",
+          summary:
+            "How Pinus roxburghii shapes the mid-hill working circles of Khyber Pakhtunkhwa.",
+          body: [
+            "Chir pine dominates many mid-elevation slopes from Hazara through Kohat. Working plans treat it as a timber and resin species with a clear regeneration cycle.",
+            "Fire is the main management risk in chir pine belts. Controlled grazing, timely thinning and community fire lines reduce the chance of crown fire.",
+          ].join("\n\n"),
+          coverImage: "/hero/forest-1.jpg",
+          orderIndex: 0,
+          status: PublishStatus.PUBLISHED,
+        },
+        {
+          slug: "deodar-and-moist-temperate",
+          title: "Deodar and moist temperate forest",
+          summary:
+            "Cedrus deodara stands in the northern circles and why regeneration matters.",
+          body: [
+            "Deodar marks the moist temperate zone of the northern region. These stands store high timber value and also protect catchments that feed downstream agriculture.",
+            "Natural regeneration needs openings that still keep the understorey moist. Over-extraction and uncontrolled browsing are the usual failure modes.",
+          ].join("\n\n"),
+          coverImage: "/hero/plantation.jpg",
+          orderIndex: 1,
+          status: PublishStatus.PUBLISHED,
+        },
+      ],
+    });
+  }
+
+  if ((await prisma.wildlifeSpecies.count()) === 0) {
+    await prisma.wildlifeSpecies.createMany({
+      data: [
+        {
+          slug: "markhor",
+          commonName: "Markhor",
+          scientificName: "Capra falconeri",
+          category: "Mammal",
+          conservationStatus: "NT",
+          habitat: "Steep cliffs and scrub of Chitral and Kohistan",
+          imageUrl: "/hero/wildlife.jpg",
+          status: PublishStatus.PUBLISHED,
+        },
+        {
+          slug: "western-tragopan",
+          commonName: "Western tragopan",
+          scientificName: "Tragopan melanocephalus",
+          category: "Bird",
+          conservationStatus: "VU",
+          habitat: "Moist temperate forest understorey of Hazara",
+          imageUrl: "/hero/forest-1.jpg",
+          status: PublishStatus.PUBLISHED,
+        },
+        {
+          slug: "leopard",
+          commonName: "Common leopard",
+          scientificName: "Panthera pardus",
+          category: "Mammal",
+          conservationStatus: "VU",
+          habitat: "Forest edges and broken hill country across the province",
+          imageUrl: "/hero/wildlife.jpg",
+          status: PublishStatus.PUBLISHED,
+        },
+        {
+          slug: "monitor-lizard",
+          commonName: "Bengal monitor",
+          scientificName: "Varanus bengalensis",
+          category: "Reptile",
+          conservationStatus: "LC",
+          habitat: "Plains scrub, riverbanks and lower hill forests",
+          status: PublishStatus.PUBLISHED,
+        },
+      ],
+    });
+  }
 }
 
 async function seedAdmin() {

@@ -36,7 +36,10 @@ export function DashboardSidebar({ role }: Props) {
         )}
       </div>
 
-      <nav aria-label="Dashboard" className="flex-1 overflow-y-auto px-2 py-4">
+      <nav
+        aria-label="Dashboard"
+        className="sidebar-scroll flex-1 overflow-y-auto px-2 py-4"
+      >
         {groups.map((group) => (
           <div key={group.label} className="mb-4">
             {!collapsed && (

@@ -1,9 +1,15 @@
 "use server";
 
-import { headers } from "next/headers";
 import { revalidateTag } from "next/cache";
 import { RequestKind, RequestStatus, Role } from "@prisma/client";
 import { requireRole } from "@/lib/auth";
+import {
+  TRACK_LIMIT,
+  TRACK_WINDOW_MS,
+  clientIp,
+  generateTicketNo,
+  guardCitizenSubmit,
+} from "@/lib/citizen-form-guard";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
 import { sanitiseMultiline, sanitiseText } from "@/lib/sanitise";
@@ -21,47 +27,6 @@ const ORG_ROLES = [
   Role.DIVISION_ADMIN,
 ] as const;
 
-const MIN_SUBMIT_MS = 3000;
-const SUBMIT_LIMIT = 3;
-const SUBMIT_WINDOW_MS = 60 * 60 * 1000;
-const TRACK_LIMIT = 10;
-const TRACK_WINDOW_MS = 60 * 60 * 1000;
-
-async function clientIp(): Promise<string> {
-  const h = await headers();
-  const forwarded = h.get("x-forwarded-for");
-  if (forwarded) {
-    const first = forwarded.split(",")[0]?.trim();
-    if (first) return first;
-  }
-  return h.get("x-real-ip")?.trim() || "unknown";
-}
-
-async function generateTicketNo(): Promise<string> {
-  const year = new Date().getFullYear();
-  const prefix = `KPFD-${year}-`;
-
-  for (let attempt = 0; attempt < 5; attempt++) {
-    const latest = await prisma.publicRequest.findFirst({
-      where: { ticketNo: { startsWith: prefix } },
-      orderBy: { ticketNo: "desc" },
-      select: { ticketNo: true },
-    });
-    let next = 1;
-    if (latest) {
-      const n = Number.parseInt(latest.ticketNo.slice(prefix.length), 10);
-      if (!Number.isNaN(n)) next = n + 1;
-    }
-    const ticketNo = `${prefix}${String(next).padStart(5, "0")}`;
-    const clash = await prisma.publicRequest.findUnique({
-      where: { ticketNo },
-      select: { id: true },
-    });
-    if (!clash) return ticketNo;
-  }
-  throw new Error("Could not allocate a ticket number");
-}
-
 /**
  * Public: lodge a complaint or suggestion (kind GENERAL).
  * Subject is stored in `topic` — schema has no dedicated subject column.
@@ -69,29 +34,18 @@ async function generateTicketNo(): Promise<string> {
 export async function submitCitizenRequest(
   input: unknown
 ): Promise<ActionResult<{ ticketNo: string }>> {
-  const ip = await clientIp();
-  const limited = rateLimit(`citizen-submit:${ip}`, SUBMIT_LIMIT, SUBMIT_WINDOW_MS);
-  if (!limited.ok) {
-    return actionError(
-      `You can submit at most ${SUBMIT_LIMIT} requests per hour. Try again in ${limited.retryAfterSec} seconds.`
-    );
-  }
-
   const parsed = citizenRequestSchema.safeParse(input);
   if (!parsed.success) {
     return actionError(parsed.error.issues[0]?.message ?? "Invalid input");
   }
 
   const data = parsed.data;
-
-  if (data.website && data.website.length > 0) {
-    return actionError("Rejected");
-  }
-
-  const elapsed = Date.now() - data.formStartedAt;
-  if (elapsed < MIN_SUBMIT_MS || elapsed > 24 * 60 * 60 * 1000) {
-    return actionError("Please take a moment to complete the form, then submit again.");
-  }
+  const blocked = await guardCitizenSubmit({
+    rateLimitKey: "citizen-submit",
+    website: data.website,
+    formStartedAt: data.formStartedAt,
+  });
+  if (blocked) return blocked;
 
   try {
     const ticketNo = await generateTicketNo();

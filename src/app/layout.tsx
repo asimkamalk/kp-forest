@@ -28,7 +28,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${fraunces.variable} ${publicSans.variable} ${plexMono.variable} ${nastaliq.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-paper text-bark">{children}</body>
+      <body
+        className="min-h-full flex flex-col bg-paper text-bark"
+        suppressHydrationWarning
+      >
+        {children}
+      </body>
     </html>
   );
 }

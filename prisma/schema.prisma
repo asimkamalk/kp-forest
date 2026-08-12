@@ -617,6 +617,27 @@ model Project {
 }
 
 // ─────────────────────────────────────────────────────────────
+// CMS PAGES  (editable public copy — About, scheme notes, guidance)
+// ─────────────────────────────────────────────────────────────
+
+model Page {
+  id         String        @id @default(cuid())
+  slug       String        @unique
+  title      String
+  titleUr    String?
+  body       String
+  bodyUr     String?
+  coverImage String?
+  orderIndex Int           @default(0)
+  status     PublishStatus @default(DRAFT)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, orderIndex])
+}
+
+// ─────────────────────────────────────────────────────────────
 // MEDIA CENTRE & PUBLIC SERVICES  (Phase 4)
 // ─────────────────────────────────────────────────────────────
 
