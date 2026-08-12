@@ -50,10 +50,21 @@ Nothing is hardcoded in JSX.
 Many users are on 3G mobile. No hero videos. No animation libraries beyond framer-motion.
 Lazy-load below-the-fold sections. Keep the homepage JS bundle under 200KB.
 
-# DESIGN LANGUAGE
-Forest green primary (#166534), gold accent (#ca8a04), warm neutrals, generous whitespace.
-Institutional and trustworthy. Rounded-xl cards, soft shadows, no gradients on text,
-no glassmorphism, no neon. Inter for English, Noto Nastaliq Urdu for Urdu.
+# DESIGN LANGUAGE — from DESIGN_SYSTEM.md §§1–6
+Atmosphere from working plans / compartment maps / elevation surveys — not stock forest green.
+Six tokens only (no ad-hoc hexes): bark #10251B, deodar #1F4D36, moss #7D9B6A, resin #B8891C,
+paper #F1F3EC, mist #D8E0D6. Not cream-terracotta; not black+neon green.
+Type: Fraunces display (≥36px, opsz/SOFT/WONK); Public Sans body/UI; IBM Plex Mono eyebrows
+(uppercase, tracking 0.14em) and data; Noto Nastaliq Urdu (line-height ≥2.2, rtl).
+Signature: ContourField — sparse/medium/dense for Regions I/II/III; ≤8% opacity over photos,
+≤14% on paper; section dividers draw via stroke-dashoffset. Restraint over decoration.
+Radius 12px cards / 8px controls. Two bark-tinted shadows only. No gradients except hero
+scrim. No glassmorphism (navbar scroll blur only). Images: 1px inset mist border.
+Spacing 4…128; sections 96px desktop / 64px mobile. Grid 12-col, max 1200px, 24px gutters.
+Motion: ease [0.22,1,0.36,1]; only transform/opacity; respect prefers-reduced-motion
+(content simply present). Contour parallax 20–30px; cards lift 6px / image 1.06 on hover.
+Copy: plain active verbs; consistent action names; citizen language; specific errors;
+inviting empty states; lead with numbers ("32 divisions across 8 circles").
 
 # WHEN UNSURE
 Ask before inventing a new model, route, or dependency. Prefer editing existing files

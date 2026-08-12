@@ -3,24 +3,39 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useId, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ChevronDown, Menu, Phone, X } from "lucide-react";
 import type { NavNode } from "@/lib/data/site";
+
+const EASE = [0.22, 1, 0.36, 1] as const;
 
 type Props = {
   items: NavNode[];
   siteName: string;
   siteNameUr?: string | null;
   logoUrl?: string | null;
+  emblemUrl?: string | null;
   helpline?: string | null;
+  /** From the database nav tree — shown only when present. */
+  emergencyHref?: string | null;
 };
 
-export function Navbar({ items, siteName, siteNameUr, logoUrl, helpline }: Props) {
+export function Navbar({
+  items,
+  siteName,
+  siteNameUr,
+  logoUrl,
+  emblemUrl,
+  helpline,
+  emergencyHref,
+}: Props) {
   const pathname = usePathname();
+  const reduce = useReducedMotion();
   const [scrolled, setScrolled] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const brandSrc = emblemUrl || logoUrl;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -29,7 +44,6 @@ export function Navbar({ items, siteName, siteNameUr, logoUrl, helpline }: Props
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // close menus on navigation
   useEffect(() => {
     setOpenId(null);
     setMobileOpen(false);
@@ -46,26 +60,47 @@ export function Navbar({ items, siteName, siteNameUr, logoUrl, helpline }: Props
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [mobileOpen]);
+
   const isActive = (href: string | null) =>
     href ? (href === "/" ? pathname === "/" : pathname.startsWith(href)) : false;
 
+  const itemActive = (item: NavNode) =>
+    isActive(item.href) || item.children.some((c) => isActive(c.href));
+
   return (
     <>
-      {/* Government top strip */}
-      <div className="hidden bg-green-950 text-[13px] text-green-100 md:block">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-2">
+      {/* Government strip */}
+      <div className="hidden bg-bark text-[11px] text-mist md:block">
+        <div className="mx-auto flex max-w-[1200px] items-center justify-between gap-4 px-6 py-2 font-mono tracking-wide">
           <span>Government of Khyber Pakhtunkhwa</span>
           <div className="flex items-center gap-5">
             {helpline && (
-              <a href={`tel:${helpline}`} className="flex items-center gap-1.5 hover:text-white">
-                <Phone className="h-3.5 w-3.5" />
+              <a
+                href={`tel:${helpline.replace(/\s/g, "")}`}
+                className="flex items-center gap-1.5 text-mist transition-colors hover:text-resin"
+              >
+                <Phone className="h-3 w-3" aria-hidden />
                 Helpline {helpline}
               </a>
             )}
-            <Link href="/services/emergency-contacts" className="hover:text-white">
-              Emergency Contacts
-            </Link>
-            <button className="rounded border border-green-700 px-2 py-0.5 hover:bg-green-900">
+            {emergencyHref && (
+              <Link href={emergencyHref} className="text-mist transition-colors hover:text-resin">
+                Emergency Contacts
+              </Link>
+            )}
+            <button
+              type="button"
+              className="rounded-[8px] border border-moss/40 px-2 py-0.5 text-mist transition-colors hover:border-resin hover:text-resin"
+              lang="ur"
+            >
               اردو
             </button>
           </div>
@@ -73,67 +108,71 @@ export function Navbar({ items, siteName, siteNameUr, logoUrl, helpline }: Props
       </div>
 
       <motion.header
-        initial={{ y: -80, opacity: 0 }}
+        initial={reduce ? false : { y: -24, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-        className={`sticky top-0 z-50 w-full transition-all duration-300 ${
+        transition={{ duration: 0.6, ease: EASE }}
+        className={`sticky top-0 z-50 w-full transition-[background-color,box-shadow,backdrop-filter] duration-300 ${
           scrolled
-            ? "bg-white/90 shadow-[0_1px_0_rgba(0,0,0,0.06),0_8px_24px_-12px_rgba(0,0,0,0.25)] backdrop-blur-md"
-            : "bg-white"
+            ? "bg-paper/90 shadow-[var(--shadow-card)] backdrop-blur-md"
+            : "bg-paper"
         }`}
         onMouseLeave={() => setOpenId(null)}
       >
         <nav
           aria-label="Main navigation"
-          className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-6"
+          className="mx-auto flex max-w-[1200px] items-center justify-between gap-6 px-6"
         >
-          {/* Brand */}
           <Link href="/" className="flex shrink-0 items-center gap-3 py-3">
-            {logoUrl ? (
-              <Image src={logoUrl} alt="" width={48} height={48} className="h-11 w-11 object-contain" />
+            {brandSrc ? (
+              <Image
+                src={brandSrc}
+                alt=""
+                width={48}
+                height={48}
+                className="h-11 w-11 object-contain"
+                style={{ boxShadow: "inset 0 0 0 1px var(--color-mist)" }}
+              />
             ) : (
-              <div className="grid h-11 w-11 place-items-center rounded-full bg-green-800 text-lg font-bold text-white">
+              <div
+                className="grid h-11 w-11 place-items-center rounded-[8px] bg-deodar font-mono text-sm font-medium text-paper"
+                aria-hidden
+              >
                 KP
               </div>
             )}
             <div className="leading-tight">
-              <div className="text-[15px] font-semibold text-green-900">{siteName}</div>
-              {siteNameUr && <div className="text-xs text-neutral-500">{siteNameUr}</div>}
+              <div className="font-sans text-[15px] font-semibold text-bark">{siteName}</div>
+              {siteNameUr && (
+                <div className="text-xs text-moss" lang="ur">
+                  {siteNameUr}
+                </div>
+              )}
             </div>
           </Link>
 
-          {/* Desktop nav */}
           <ul className="hidden items-center lg:flex">
             {items.map((item) => {
               const hasChildren = item.children.length > 0;
               const open = openId === item.id;
+              const active = itemActive(item);
 
               return (
-                <li key={item.id} className="relative" onMouseEnter={() => setOpenId(item.id)}>
-                  {item.href && !hasChildren ? (
-                    <Link
-                      href={item.href}
-                      className={`relative block px-3.5 py-6 text-sm font-medium transition-colors ${
-                        isActive(item.href)
-                          ? "text-green-800"
-                          : "text-neutral-700 hover:text-green-800"
-                      }`}
-                    >
-                      {item.label}
-                      {isActive(item.href) && (
-                        <motion.span
-                          layoutId="nav-underline"
-                          className="absolute inset-x-3 bottom-4 h-0.5 rounded bg-green-700"
-                        />
-                      )}
-                    </Link>
-                  ) : (
+                <li
+                  key={item.id}
+                  className="relative"
+                  onMouseEnter={() => {
+                    if (hasChildren) setOpenId(item.id);
+                    else setOpenId(null);
+                  }}
+                >
+                  {hasChildren ? (
                     <button
+                      type="button"
                       aria-expanded={open}
                       aria-haspopup="true"
                       onClick={() => setOpenId(open ? null : item.id)}
-                      className={`flex items-center gap-1 px-3.5 py-6 text-sm font-medium transition-colors ${
-                        open ? "text-green-800" : "text-neutral-700 hover:text-green-800"
+                      className={`relative flex items-center gap-1 px-3.5 py-6 text-sm font-medium transition-colors ${
+                        active || open ? "text-deodar" : "text-bark/80 hover:text-deodar"
                       }`}
                     >
                       {item.label}
@@ -141,35 +180,61 @@ export function Navbar({ items, siteName, siteNameUr, logoUrl, helpline }: Props
                         className={`h-3.5 w-3.5 transition-transform duration-200 ${
                           open ? "rotate-180" : ""
                         }`}
+                        aria-hidden
                       />
+                      {active && (
+                        <motion.span
+                          layoutId="nav-underline"
+                          className="absolute inset-x-3 bottom-4 h-0.5 rounded bg-resin"
+                          transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                        />
+                      )}
                     </button>
-                  )}
+                  ) : item.href ? (
+                    <Link
+                      href={item.href}
+                      className={`relative block px-3.5 py-6 text-sm font-medium transition-colors ${
+                        active ? "text-deodar" : "text-bark/80 hover:text-deodar"
+                      }`}
+                    >
+                      {item.label}
+                      {active && (
+                        <motion.span
+                          layoutId="nav-underline"
+                          className="absolute inset-x-3 bottom-4 h-0.5 rounded bg-resin"
+                          transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                        />
+                      )}
+                    </Link>
+                  ) : null}
 
                   <AnimatePresence>
                     {hasChildren && open && (
                       <motion.div
-                        initial={{ opacity: 0, y: 8 }}
+                        initial={reduce ? false : { opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 8 }}
-                        transition={{ duration: 0.18, ease: "easeOut" }}
-                        className={`absolute left-0 top-full rounded-xl border border-neutral-200 bg-white p-2 shadow-xl ${
+                        exit={reduce ? undefined : { opacity: 0, y: 8 }}
+                        transition={{ duration: 0.18, ease: EASE }}
+                        className={`absolute left-0 top-full rounded-[12px] border border-mist bg-paper p-2 shadow-[var(--shadow-card)] ${
                           item.isMegaMenu ? "grid w-[520px] grid-cols-2 gap-1" : "w-64"
                         }`}
                       >
-                        {item.children.map((child) => (
-                          <Link
-                            key={child.id}
-                            href={child.href ?? "#"}
-                            className="group flex flex-col rounded-lg px-3 py-2.5 transition-colors hover:bg-green-50"
-                          >
-                            <span className="text-sm font-medium text-neutral-800 group-hover:text-green-800">
-                              {child.label}
-                            </span>
-                            {child.description && (
-                              <span className="text-xs text-neutral-500">{child.description}</span>
-                            )}
-                          </Link>
-                        ))}
+                        {item.children.map((child) =>
+                          child.href ? (
+                            <Link
+                              key={child.id}
+                              href={child.href}
+                              className="group flex flex-col rounded-[8px] px-3 py-2.5 transition-colors hover:bg-mist/60"
+                            >
+                              <span className="text-sm font-medium text-bark group-hover:text-deodar">
+                                {child.label}
+                              </span>
+                              {child.description && (
+                                <span className="text-xs text-moss">{child.description}</span>
+                              )}
+                            </Link>
+                          ) : null
+                        )}
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -179,16 +244,18 @@ export function Navbar({ items, siteName, siteNameUr, logoUrl, helpline }: Props
           </ul>
 
           <button
-            className="rounded-lg p-2 text-neutral-700 lg:hidden"
+            type="button"
+            className="rounded-[8px] p-2 text-bark lg:hidden"
             onClick={() => setMobileOpen(true)}
             aria-label="Open menu"
+            aria-expanded={mobileOpen}
+            aria-haspopup="dialog"
           >
             <Menu className="h-6 w-6" />
           </button>
         </nav>
       </motion.header>
 
-      {/* Mobile drawer */}
       <AnimatePresence>
         {mobileOpen && (
           <>
@@ -196,19 +263,29 @@ export function Navbar({ items, siteName, siteNameUr, logoUrl, helpline }: Props
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
               onClick={() => setMobileOpen(false)}
-              className="fixed inset-0 z-[60] bg-black/40 lg:hidden"
+              className="fixed inset-0 z-[60] bg-bark/40 lg:hidden"
+              aria-hidden
             />
             <motion.aside
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
-              transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="fixed inset-y-0 right-0 z-[70] w-[85%] max-w-sm overflow-y-auto bg-white p-5 lg:hidden"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Site menu"
+              initial={reduce ? false : { opacity: 0, x: 24 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={reduce ? undefined : { opacity: 0, x: 24 }}
+              transition={{ duration: 0.3, ease: EASE }}
+              className="fixed inset-y-0 right-0 z-[70] w-[85%] max-w-sm overflow-y-auto bg-paper p-5 shadow-[var(--shadow-card-hover)] lg:hidden"
             >
               <div className="mb-4 flex items-center justify-between">
-                <span className="font-semibold text-green-900">Menu</span>
-                <button onClick={() => setMobileOpen(false)} aria-label="Close menu">
+                <span className="eyebrow">Menu</span>
+                <button
+                  type="button"
+                  onClick={() => setMobileOpen(false)}
+                  aria-label="Close menu"
+                  className="rounded-[8px] p-1 text-bark"
+                >
                   <X className="h-5 w-5" />
                 </button>
               </div>
@@ -223,50 +300,74 @@ export function Navbar({ items, siteName, siteNameUr, logoUrl, helpline }: Props
 
 function MobileNav({ items }: { items: NavNode[] }) {
   const [expanded, setExpanded] = useState<string | null>(null);
+  const reduce = useReducedMotion();
+  const baseId = useId();
 
   return (
     <ul className="space-y-1">
-      {items.map((item) => (
-        <li key={item.id} className="border-b border-neutral-100 last:border-0">
-          {item.children.length === 0 && item.href ? (
-            <Link href={item.href} className="block py-3 text-[15px] font-medium text-neutral-800">
-              {item.label}
-            </Link>
-          ) : (
-            <>
-              <button
-                onClick={() => setExpanded(expanded === item.id ? null : item.id)}
-                className="flex w-full items-center justify-between py-3 text-left text-[15px] font-medium text-neutral-800"
-                aria-expanded={expanded === item.id}
-              >
+      {items.map((item) => {
+        const panelId = `${baseId}-${item.id}`;
+        const open = expanded === item.id;
+
+        return (
+          <li key={item.id} className="border-b border-mist last:border-0">
+            {item.children.length === 0 && item.href ? (
+              <Link href={item.href} className="block py-3 text-[15px] font-medium text-bark">
                 {item.label}
-                <ChevronDown
-                  className={`h-4 w-4 transition-transform ${expanded === item.id ? "rotate-180" : ""}`}
-                />
-              </button>
-              <AnimatePresence initial={false}>
-                {expanded === item.id && (
-                  <motion.ul
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.25 }}
-                    className="overflow-hidden pb-2 pl-3"
-                  >
-                    {item.children.map((c) => (
-                      <li key={c.id}>
-                        <Link href={c.href ?? "#"} className="block py-2 text-sm text-neutral-600">
-                          {c.label}
-                        </Link>
-                      </li>
-                    ))}
-                  </motion.ul>
-                )}
-              </AnimatePresence>
-            </>
-          )}
-        </li>
-      ))}
+              </Link>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  id={`${panelId}-trigger`}
+                  onClick={() => setExpanded(open ? null : item.id)}
+                  className="flex w-full items-center justify-between py-3 text-left text-[15px] font-medium text-bark"
+                  aria-expanded={open}
+                  aria-controls={panelId}
+                  aria-haspopup="true"
+                >
+                  {item.label}
+                  <ChevronDown
+                    className={`h-4 w-4 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+                    aria-hidden
+                  />
+                </button>
+                <AnimatePresence initial={false}>
+                  {open && (
+                    <motion.ul
+                      id={panelId}
+                      role="region"
+                      aria-labelledby={`${panelId}-trigger`}
+                      initial={reduce ? false : { opacity: 0, y: -6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={reduce ? undefined : { opacity: 0, y: -6 }}
+                      transition={{ duration: 0.2, ease: EASE }}
+                      className="pb-2 pl-3"
+                    >
+                      {item.href && (
+                        <li>
+                          <Link href={item.href} className="block py-2 text-sm text-deodar">
+                            {item.label}
+                          </Link>
+                        </li>
+                      )}
+                      {item.children.map((c) =>
+                        c.href ? (
+                          <li key={c.id}>
+                            <Link href={c.href} className="block py-2 text-sm text-moss hover:text-deodar">
+                              {c.label}
+                            </Link>
+                          </li>
+                        ) : null
+                      )}
+                    </motion.ul>
+                  )}
+                </AnimatePresence>
+              </>
+            )}
+          </li>
+        );
+      })}
     </ul>
   );
 }

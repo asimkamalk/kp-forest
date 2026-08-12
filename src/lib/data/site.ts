@@ -66,7 +66,7 @@ export const getHeroSlides = unstable_cache(
       orderBy: { orderIndex: "asc" },
     });
   },
-  ["hero-slides"],
+  ["hero-slides-v2"],
   { tags: ["hero"], revalidate: 300 }
 );
 
@@ -91,9 +91,25 @@ export const getMessages = unstable_cache(
   { tags: ["messages"], revalidate: 3600 }
 );
 
-export const getMessageBySlug = unstable_cache(
-  async (slug: string) => prisma.message.findFirst({ where: { slug, ...PUBLISHED } }),
-  ["message-by-slug"],
+export async function getMessageBySlug(slug: string) {
+  return unstable_cache(
+    async () =>
+      prisma.message.findFirst({
+        where: { slug, ...PUBLISHED },
+      }),
+    ["message-by-slug", slug],
+    { tags: ["messages"], revalidate: 3600 }
+  )();
+}
+
+export const getPublishedMessageSlugs = unstable_cache(
+  async () =>
+    prisma.message.findMany({
+      where: PUBLISHED,
+      orderBy: { orderIndex: "asc" },
+      select: { slug: true },
+    }),
+  ["message-slugs"],
   { tags: ["messages"], revalidate: 3600 }
 );
 
@@ -122,10 +138,20 @@ export const getRegions = unstable_cache(
         coverImage: true,
         centerLat: true,
         centerLng: true,
-        _count: { select: { circles: true } },
+        _count: {
+          select: {
+            circles: { where: PUBLISHED },
+          },
+        },
         circles: {
           where: PUBLISHED,
-          select: { _count: { select: { divisions: true } } },
+          select: {
+            _count: {
+              select: {
+                divisions: { where: PUBLISHED },
+              },
+            },
+          },
         },
       },
     }),
@@ -134,53 +160,118 @@ export const getRegions = unstable_cache(
 );
 
 /** Region page: its circles, each with a division count + preview names. */
-export const getRegionWithCircles = unstable_cache(
-  async (slug: string) =>
-    prisma.region.findFirst({
-      where: { slug, ...PUBLISHED },
-      include: {
-        circles: {
-          where: PUBLISHED,
-          orderBy: { orderIndex: "asc" },
-          include: {
-            _count: { select: { divisions: true } },
-            divisions: {
-              where: PUBLISHED,
-              orderBy: { orderIndex: "asc" },
-              select: { id: true, slug: true, name: true },
+export async function getRegionWithCircles(slug: string) {
+  return unstable_cache(
+    async () =>
+      prisma.region.findFirst({
+        where: { slug, ...PUBLISHED },
+        include: {
+          circles: {
+            where: PUBLISHED,
+            orderBy: { orderIndex: "asc" },
+            include: {
+              _count: {
+                select: {
+                  divisions: { where: PUBLISHED },
+                },
+              },
+              divisions: {
+                where: PUBLISHED,
+                orderBy: { orderIndex: "asc" },
+                select: { id: true, slug: true, name: true },
+              },
             },
           },
         },
-      },
-    }),
-  ["region-with-circles"],
-  { tags: ["regions"], revalidate: 3600 }
-);
+      }),
+    ["region-with-circles", slug],
+    { tags: ["regions"], revalidate: 3600 }
+  )();
+}
 
-/** Circle page: its divisions. */
-export const getCircleWithDivisions = unstable_cache(
-  async (regionSlug: string, circleSlug: string) =>
-    prisma.circle.findFirst({
-      where: { slug: circleSlug, ...PUBLISHED, region: { slug: regionSlug, ...PUBLISHED } },
-      include: {
-        region: { select: { id: true, slug: true, name: true, code: true } },
-        divisions: {
-          where: PUBLISHED,
-          orderBy: { orderIndex: "asc" },
-          include: { _count: { select: { subDivisions: true, activities: true } } },
+/** Circle page: its divisions. Null unless the circle belongs to that region. */
+export async function getCircleWithDivisions(regionSlug: string, circleSlug: string) {
+  return unstable_cache(
+    async () =>
+      prisma.circle.findFirst({
+        where: {
+          slug: circleSlug,
+          ...PUBLISHED,
+          region: { slug: regionSlug, ...PUBLISHED },
         },
-      },
+        include: {
+          region: { select: { id: true, slug: true, name: true, code: true } },
+          divisions: {
+            where: PUBLISHED,
+            orderBy: { orderIndex: "asc" },
+            include: {
+              _count: {
+                select: {
+                  subDivisions: { where: PUBLISHED },
+                },
+              },
+            },
+          },
+        },
+      }),
+    ["circle-with-divisions", regionSlug, circleSlug],
+    { tags: ["regions"], revalidate: 3600 }
+  )();
+}
+
+/** Division detail: null unless the full region → circle → division chain matches. */
+export async function getDivisionByPath(
+  regionSlug: string,
+  circleSlug: string,
+  divisionSlug: string
+) {
+  return unstable_cache(
+    async () =>
+      prisma.division.findFirst({
+        where: {
+          slug: divisionSlug,
+          ...PUBLISHED,
+          circle: {
+            slug: circleSlug,
+            ...PUBLISHED,
+            region: { slug: regionSlug, ...PUBLISHED },
+          },
+        },
+        include: {
+          circle: {
+            select: {
+              id: true,
+              slug: true,
+              name: true,
+              region: { select: { id: true, slug: true, name: true, code: true } },
+            },
+          },
+        },
+      }),
+    ["division-by-path", regionSlug, circleSlug, divisionSlug],
+    { tags: ["regions"], revalidate: 3600 }
+  )();
+}
+
+export const getPublishedRegionSlugs = unstable_cache(
+  async () =>
+    prisma.region.findMany({
+      where: PUBLISHED,
+      orderBy: { orderIndex: "asc" },
+      select: { slug: true },
     }),
-  ["circle-with-divisions"],
+  ["region-slugs"],
   { tags: ["regions"], revalidate: 3600 }
 );
 
 /* ------------------------------ SITE SETTINGS ---------------------------- */
 
 export const getSiteSettings = unstable_cache(
-  async () =>
-    prisma.siteSetting.findUnique({ where: { id: "singleton" } }) ??
-    prisma.siteSetting.create({ data: { id: "singleton" } }),
+  async () => {
+    const existing = await prisma.siteSetting.findUnique({ where: { id: "singleton" } });
+    if (existing) return existing;
+    return prisma.siteSetting.create({ data: { id: "singleton" } });
+  },
   ["site-settings"],
   { tags: ["settings"], revalidate: 3600 }
 );

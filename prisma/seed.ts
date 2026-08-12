@@ -374,7 +374,8 @@ async function seedSite() {
           title: "Guardians of Khyber Pakhtunkhwa's Forests",
           subtitle:
             "Three regions, eight circles and thirty-two divisions working to protect 1.9 million hectares of forest.",
-          imageUrl: "/images/hero/forest-1.jpg",
+          imageUrl: "/hero/forest-1.jpg",
+          imageAlt: "Forest canopy in Khyber Pakhtunkhwa",
           ctaLabel: "Explore Regions",
           ctaHref: "/regions",
           secondaryCtaLabel: "Our Projects",
@@ -385,7 +386,8 @@ async function seedSite() {
         {
           title: "Plant for Pakhtunkhwa",
           subtitle: "Urban and rural plantation campaigns across every district of the province.",
-          imageUrl: "/images/hero/plantation.jpg",
+          imageUrl: "/hero/plantation.jpg",
+          imageAlt: "Plantation campaign in Khyber Pakhtunkhwa",
           ctaLabel: "View Campaigns",
           ctaHref: "/plantation/campaigns",
           orderIndex: 1,
@@ -394,7 +396,8 @@ async function seedSite() {
         {
           title: "Wildlife of the North",
           subtitle: "Conserving the snow leopard, markhor and the habitats they depend on.",
-          imageUrl: "/images/hero/wildlife.jpg",
+          imageUrl: "/hero/wildlife.jpg",
+          imageAlt: "Wildlife habitat in northern Khyber Pakhtunkhwa",
           ctaLabel: "Know Your Forest",
           ctaHref: "/know-your-forest",
           orderIndex: 2,
