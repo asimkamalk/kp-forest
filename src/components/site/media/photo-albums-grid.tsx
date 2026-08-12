@@ -72,7 +72,7 @@ export function PhotoAlbumsGrid({ albums }: Props) {
                   {album.coverImage ? (
                     <Image
                       src={album.coverImage}
-                      alt=""
+                      alt={album.title}
                       fill
                       sizes="(max-width: 640px) 100vw, 33vw"
                       className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"

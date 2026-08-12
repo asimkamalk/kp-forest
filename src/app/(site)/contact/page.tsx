@@ -4,6 +4,13 @@ import { Reveal } from "@/components/motion/reveal";
 import { ContactDirectory } from "@/components/site/contact/contact-directory";
 import { OfficeMap } from "@/components/site/office-map";
 import { getContactDirectory, getSiteSettings } from "@/lib/data/site";
+import { pageMeta } from "@/lib/seo";
+
+export const metadata = pageMeta(
+  "Contact directory",
+  "Find Forest Department officers and offices across Khyber Pakhtunkhwa.",
+  "/contact"
+);
 
 /** Forest Department HQ — Shami Road, Peshawar (approximate). */
 const HQ_LAT = 34.0135;

@@ -79,6 +79,28 @@ body {
   border-radius: 4px;
 }
 
+/* Skip link: visually hidden until keyboard focus */
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: 1rem;
+  z-index: 100;
+  transform: translateY(-200%);
+  border-radius: 8px;
+  background: var(--color-resin);
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-bark);
+  box-shadow: var(--shadow-card);
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+  outline: 2px solid var(--color-bark);
+  outline-offset: 3px;
+}
+
 /* Dark sidebar — thin, bark-tinted scrollbar (no OS chrome arrows) */
 .sidebar-scroll {
   scrollbar-width: thin;

@@ -127,7 +127,7 @@ export function Navbar({
               {brandSrc ? (
                 <Image
                   src={brandSrc}
-                  alt=""
+                  alt={siteName}
                   width={48}
                   height={48}
                   className="h-11 w-11 shrink-0 object-contain"

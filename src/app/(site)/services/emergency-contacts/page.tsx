@@ -6,6 +6,13 @@ import {
   getPageBySlug,
   getSiteSettings,
 } from "@/lib/data/site";
+import { pageMeta } from "@/lib/seo";
+
+export const metadata = pageMeta(
+  "Emergency contacts",
+  "Helpline and officer contacts for forest fires and other forest emergencies in KP.",
+  "/services/emergency-contacts"
+);
 
 export default async function EmergencyContactsPage() {
   const [settings, groups, guidance] = await Promise.all([

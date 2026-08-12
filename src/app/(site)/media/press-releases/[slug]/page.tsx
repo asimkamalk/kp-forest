@@ -94,7 +94,7 @@ export default async function PressReleaseDetailPage({ params }: Props) {
             <div className="relative aspect-[16/9] w-full overflow-hidden rounded-[12px] bg-mist">
               <Image
                 src={post.coverImage}
-                alt=""
+                alt={post.title}
                 fill
                 priority
                 sizes="800px"

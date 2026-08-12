@@ -81,7 +81,7 @@ export async function LatestNews() {
                     {featured.coverImage ? (
                       <Image
                         src={featured.coverImage}
-                        alt=""
+                        alt={featured.title}
                         fill
                         sizes="(max-width: 1024px) 100vw, 66vw"
                         className="object-cover transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.06]"

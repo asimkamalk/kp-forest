@@ -3,6 +3,13 @@ import { Reveal } from "@/components/motion/reveal";
 import { PageBody } from "@/components/site/services/page-body";
 import { PlantRequestForm } from "@/components/site/services/plant-request-form";
 import { getPageBySlug } from "@/lib/data/site";
+import { pageMeta } from "@/lib/seo";
+
+export const metadata = pageMeta(
+  "Request plants",
+  "Apply for saplings under the Forest Department free plant scheme and track your request.",
+  "/services/plant-request"
+);
 
 export default async function PlantRequestPage() {
   const page = await getPageBySlug("free-plant-scheme");

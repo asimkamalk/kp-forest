@@ -3,7 +3,9 @@
 import { revalidateTag } from "next/cache";
 import { Role } from "@prisma/client";
 import { requireRole } from "@/lib/auth";
+import { clientIp } from "@/lib/citizen-form-guard";
 import { prisma } from "@/lib/prisma";
+import { rateLimit } from "@/lib/rate-limit";
 import { downloadSchema } from "@/lib/validators/download";
 import { actionError, actionOk, type ActionResult } from "@/server/actions/types";
 
@@ -114,6 +116,14 @@ export async function incrementDownloadCount(
   id: string
 ): Promise<ActionResult<{ id: string }>> {
   if (!id) return actionError("Missing download id");
+
+  const ip = await clientIp();
+  const limited = rateLimit(`download-count:${ip}`, 60, 60 * 60 * 1000);
+  if (!limited.ok) {
+    return actionError(
+      `Too many requests. Try again in ${limited.retryAfterSec} seconds.`
+    );
+  }
 
   try {
     const row = await prisma.download.update({

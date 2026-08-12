@@ -79,7 +79,7 @@ export default async function KnowYourForestDetailPage({ params }: Props) {
             >
               <Image
                 src={article.coverImage}
-                alt=""
+                alt={article.title}
                 fill
                 priority
                 sizes="800px"

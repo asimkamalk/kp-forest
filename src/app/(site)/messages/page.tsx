@@ -3,6 +3,13 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Reveal, Stagger, StaggerItem } from "@/components/motion/reveal";
 import { getMessages } from "@/lib/data/site";
+import { pageMeta } from "@/lib/seo";
+
+export const metadata = pageMeta(
+  "Leadership messages",
+  "Messages from provincial leadership on forests, climate and the Forest Department.",
+  "/messages"
+);
 
 function initials(name: string) {
   return name

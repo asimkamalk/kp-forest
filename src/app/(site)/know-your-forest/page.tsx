@@ -2,6 +2,13 @@ import Link from "next/link";
 import { Reveal } from "@/components/motion/reveal";
 import { KnowYourForestGrid } from "@/components/site/know-your-forest/article-grid";
 import { getKnowYourForestArticles } from "@/lib/data/site";
+import { pageMeta } from "@/lib/seo";
+
+export const metadata = pageMeta(
+  "Know your forest",
+  "Guides to the trees, habitats and working practices of Khyber Pakhtunkhwa's forests.",
+  "/know-your-forest"
+);
 
 export default async function KnowYourForestPage() {
   const articles = await getKnowYourForestArticles();

@@ -58,7 +58,7 @@ export async function Footer({ settings, nav }: Props) {
             {brandSrc ? (
               <Image
                 src={brandSrc}
-                alt=""
+                alt={settings.siteName}
                 width={48}
                 height={48}
                 className="h-12 w-12 object-contain"

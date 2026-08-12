@@ -1,6 +1,13 @@
 import Link from "next/link";
 import { Reveal } from "@/components/motion/reveal";
 import { TrackRequestForm } from "@/components/site/contact/track-request-form";
+import { pageMeta } from "@/lib/seo";
+
+export const metadata = pageMeta(
+  "Track a request",
+  "Check the status of a complaint, suggestion or service request with your ticket number.",
+  "/contact/track"
+);
 
 export default function TrackRequestPage() {
   return (

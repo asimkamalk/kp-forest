@@ -111,7 +111,7 @@ export default async function ProjectDetailPage({ params }: Props) {
             >
               <Image
                 src={project.coverImage}
-                alt=""
+                alt={project.title}
                 fill
                 priority
                 sizes="100vw"

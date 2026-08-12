@@ -1,4 +1,11 @@
 import { LoginForm } from "@/components/dashboard/login-form";
+import { pageMeta } from "@/lib/seo";
+
+export const metadata = pageMeta(
+  "Sign in",
+  "Staff sign-in for the Forest Department dashboard.",
+  "/login"
+);
 
 type SearchParams = Promise<{ next?: string }>;
 

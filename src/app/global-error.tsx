@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { Fraunces, Public_Sans, IBM_Plex_Mono, Noto_Nastaliq_Urdu } from "next/font/google";
 import Link from "next/link";
+import { logClientError } from "@/server/actions/log-error";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -39,7 +40,12 @@ type Props = {
  */
 export default function GlobalError({ error, reset }: Props) {
   useEffect(() => {
-    console.error(error);
+    void logClientError({
+      message: error.message,
+      digest: error.digest,
+      stack: error.stack,
+      source: "global-error.tsx",
+    });
   }, [error]);
 
   return (

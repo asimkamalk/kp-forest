@@ -1,6 +1,13 @@
 import Link from "next/link";
 import { FlaskConical, PhoneCall, Sprout, type LucideIcon } from "lucide-react";
 import { Reveal, Stagger, StaggerItem } from "@/components/motion/reveal";
+import { pageMeta } from "@/lib/seo";
+
+export const metadata = pageMeta(
+  "Citizen services",
+  "Request plants, submit research applications, and find forest emergency contacts.",
+  "/services"
+);
 
 const SERVICES: {
   href: string;

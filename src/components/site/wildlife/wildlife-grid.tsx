@@ -73,7 +73,7 @@ export function WildlifeGrid({ species, activeCategory }: Props) {
                 {item.imageUrl ? (
                   <Image
                     src={item.imageUrl}
-                    alt=""
+                    alt={item.commonName}
                     fill
                     sizes="(max-width: 640px) 100vw, 33vw"
                     className="object-cover"

@@ -1,6 +1,13 @@
 import Link from "next/link";
 import { Reveal } from "@/components/motion/reveal";
 import { ResearchRequestForm } from "@/components/site/services/research-request-form";
+import { pageMeta } from "@/lib/seo";
+
+export const metadata = pageMeta(
+  "Research request",
+  "Seek permission or data for forest-related research from the Forest Department, KP.",
+  "/services/research-request"
+);
 
 export default function ResearchRequestPage() {
   return (

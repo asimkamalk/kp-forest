@@ -49,7 +49,7 @@ export async function RegionsSection() {
                     {region.coverImage ? (
                       <Image
                         src={region.coverImage}
-                        alt=""
+                        alt={region.name}
                         fill
                         sizes="(max-width: 768px) 100vw, 33vw"
                         className="object-cover transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.06]"

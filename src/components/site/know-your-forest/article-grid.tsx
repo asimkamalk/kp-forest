@@ -31,7 +31,7 @@ export function KnowYourForestGrid({ articles }: Props) {
               {article.coverImage ? (
                 <Image
                   src={article.coverImage}
-                  alt=""
+                  alt={article.title}
                   fill
                   sizes="(max-width: 640px) 100vw, 33vw"
                   className="object-cover transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.06]"

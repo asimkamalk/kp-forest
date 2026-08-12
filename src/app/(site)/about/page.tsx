@@ -106,7 +106,7 @@ export default async function AboutPage() {
             >
               <Image
                 src={page.coverImage}
-                alt=""
+                alt={page.title}
                 fill
                 priority
                 sizes="100vw"

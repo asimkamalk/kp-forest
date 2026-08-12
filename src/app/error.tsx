@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { StatusPageContent } from "@/components/site/status-page-content";
+import { logClientError } from "@/server/actions/log-error";
 
 type Props = {
   error: Error & { digest?: string };
@@ -10,7 +11,12 @@ type Props = {
 
 export default function RootError({ error, reset }: Props) {
   useEffect(() => {
-    console.error(error);
+    void logClientError({
+      message: error.message,
+      digest: error.digest,
+      stack: error.stack,
+      source: "error.tsx",
+    });
   }, [error]);
 
   return (

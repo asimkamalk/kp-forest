@@ -20,6 +20,9 @@ export default async function SiteLayout({ children }: { children: ReactNode }) 
 
   return (
     <LenisProvider>
+      <a href="#main-content" className="skip-link">
+        Skip to content
+      </a>
       <Navbar
         items={nav}
         siteName={settings.siteName}
@@ -29,7 +32,9 @@ export default async function SiteLayout({ children }: { children: ReactNode }) 
         helpline={settings.helplineNumber}
         emergencyHref={emergencyHref}
       />
-      <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+      <div id="main-content" tabIndex={-1} className="flex min-h-0 flex-1 flex-col outline-none">
+        {children}
+      </div>
       <Footer settings={settings} nav={nav} />
     </LenisProvider>
   );

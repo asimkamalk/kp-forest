@@ -1,5 +1,12 @@
 import { PressReleasesList } from "@/components/site/media/press-releases-list";
 import { getPressReleasesPage } from "@/lib/data/site";
+import { pageMeta } from "@/lib/seo";
+
+export const metadata = pageMeta(
+  "Press releases",
+  "Official press releases from the Forest Department, Government of Khyber Pakhtunkhwa.",
+  "/media/press-releases"
+);
 
 type Props = {
   searchParams: Promise<{ page?: string }>;

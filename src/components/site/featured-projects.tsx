@@ -67,7 +67,7 @@ export async function FeaturedProjects() {
                       {project.coverImage ? (
                         <Image
                           src={project.coverImage}
-                          alt=""
+                          alt={project.title}
                           fill
                           sizes="(max-width: 768px) 100vw, 33vw"
                           className="object-cover transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.06]"

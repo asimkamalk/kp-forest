@@ -98,6 +98,23 @@ export function HeroCarousel({ slides }: Props) {
     };
   }, [paused, reduce, count, index, goNext, progressKey]);
 
+  useEffect(() => {
+    if (count < 2) return;
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement | null)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        goPrev();
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        goNext();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [count, goPrev, goNext]);
+
   return (
     <section
       aria-roledescription="carousel"
@@ -111,6 +128,16 @@ export function HeroCarousel({ slides }: Props) {
       onMouseLeave={() => {
         hoverRef.current = false;
         if (!hiddenRef.current && !reduce) setPaused(false);
+      }}
+      onFocusCapture={() => {
+        hoverRef.current = true;
+        setPaused(true);
+      }}
+      onBlurCapture={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+          hoverRef.current = false;
+          if (!hiddenRef.current && !reduce) setPaused(false);
+        }
       }}
     >
       <div className="absolute inset-0">
@@ -211,7 +238,7 @@ export function HeroCarousel({ slides }: Props) {
           <button
             type="button"
             onClick={goPrev}
-            className="pointer-events-auto grid h-11 w-11 place-items-center rounded-[8px] border border-mist/40 bg-bark/40 text-paper transition-colors hover:border-resin hover:text-resin"
+            className="pointer-events-auto grid h-11 w-11 place-items-center rounded-[8px] border border-mist/40 bg-bark/40 text-paper transition-colors hover:border-resin hover:text-resin focus-visible:border-resin focus-visible:text-resin"
             aria-label="Previous slide"
           >
             <ChevronLeft className="h-5 w-5" aria-hidden />
@@ -219,7 +246,7 @@ export function HeroCarousel({ slides }: Props) {
           <button
             type="button"
             onClick={goNext}
-            className="pointer-events-auto grid h-11 w-11 place-items-center rounded-[8px] border border-mist/40 bg-bark/40 text-paper transition-colors hover:border-resin hover:text-resin"
+            className="pointer-events-auto grid h-11 w-11 place-items-center rounded-[8px] border border-mist/40 bg-bark/40 text-paper transition-colors hover:border-resin hover:text-resin focus-visible:border-resin focus-visible:text-resin"
             aria-label="Next slide"
           >
             <ChevronRight className="h-5 w-5" aria-hidden />

@@ -3,6 +3,13 @@ import { Reveal } from "@/components/motion/reveal";
 import { WildlifeGrid } from "@/components/site/wildlife/wildlife-grid";
 import { getWildlifeSpecies } from "@/lib/data/site";
 import { WILDLIFE_CATEGORIES } from "@/lib/validators/services";
+import { pageMeta } from "@/lib/seo";
+
+export const metadata = pageMeta(
+  "Wildlife",
+  "Browse wildlife species found in the forests of Khyber Pakhtunkhwa.",
+  "/wildlife"
+);
 
 type Props = {
   searchParams: Promise<{ category?: string }>;

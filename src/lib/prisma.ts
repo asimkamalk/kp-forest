@@ -37,12 +37,11 @@ function createPrismaClient() {
 
 /** True when the cached client predates current schema fields (e.g. Page.summary). */
 function isStaleClient(client: PrismaClient): boolean {
-  const page = (client as { page?: { fields?: Record<string, unknown> } }).page;
-  if (!page || typeof (page as { findFirst?: unknown }).findFirst !== "function") {
+  const page = (client as unknown as { page?: { findFirst?: unknown } }).page;
+  if (!page || typeof page.findFirst !== "function") {
     return true;
   }
-  // Prisma 7 exposes model field metadata on the delegate in some builds; also
-  // force recreate via CLIENT_GENERATION when fields are added.
+  // Force recreate via CLIENT_GENERATION when fields are added.
   return false;
 }
 

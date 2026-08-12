@@ -1,6 +1,13 @@
 import Link from "next/link";
 import { Reveal } from "@/components/motion/reveal";
 import { CitizenRequestForm } from "@/components/site/contact/citizen-request-form";
+import { pageMeta } from "@/lib/seo";
+
+export const metadata = pageMeta(
+  "Submit a suggestion",
+  "Share ideas to improve Forest Department services and follow up with your ticket number.",
+  "/contact/suggestion"
+);
 
 export default function SuggestionPage() {
   return (

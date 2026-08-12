@@ -63,7 +63,7 @@ export function AboutProseLayout({
             >
               <Image
                 src={page.coverImage}
-                alt=""
+                alt={page.title}
                 fill
                 priority
                 sizes="800px"

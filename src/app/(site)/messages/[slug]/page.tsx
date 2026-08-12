@@ -164,7 +164,7 @@ export default async function MessageDetailPage({ params }: Props) {
                         {item.photoUrl ? (
                           <Image
                             src={item.photoUrl}
-                            alt=""
+                            alt={item.personName}
                             fill
                             sizes="56px"
                             className="object-cover"

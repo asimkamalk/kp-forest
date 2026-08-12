@@ -1,10 +1,52 @@
 import dynamic from "next/dynamic";
 import { Hero } from "@/components/site/hero";
-import { MessagesSection } from "@/components/site/messages-section";
 import { QuickServices } from "@/components/site/quick-services";
-import { RegionsSection } from "@/components/site/regions-section";
 import { SectionDivider } from "@/components/site/section-divider";
 import { StatsBand } from "@/components/site/stats-band";
+import { GovernmentOrgJsonLd } from "@/components/site/government-org-json-ld";
+import { pageMeta } from "@/lib/seo";
+
+export const metadata = pageMeta(
+  "Forest Department, Khyber Pakhtunkhwa | Official portal",
+  "Official portal of the Forest Department, Government of Khyber Pakhtunkhwa — regions, projects, downloads, media and citizen services.",
+  "/"
+);
+
+const MessagesSection = dynamic(
+  () => import("@/components/site/messages-section").then((m) => m.MessagesSection),
+  {
+    loading: () => (
+      <div className="bg-paper py-16 md:py-24" aria-hidden>
+        <div className="mx-auto max-w-[1200px] px-6">
+          <div className="h-8 w-56 animate-pulse rounded bg-mist" />
+          <div className="mt-10 grid gap-6 md:grid-cols-3">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="h-48 animate-pulse rounded-[12px] bg-mist" />
+            ))}
+          </div>
+        </div>
+      </div>
+    ),
+  }
+);
+
+const RegionsSection = dynamic(
+  () => import("@/components/site/regions-section").then((m) => m.RegionsSection),
+  {
+    loading: () => (
+      <div className="bg-white py-16 md:py-24" aria-hidden>
+        <div className="mx-auto max-w-[1200px] px-6">
+          <div className="h-8 w-48 animate-pulse rounded bg-mist" />
+          <div className="mt-10 grid gap-6 md:grid-cols-3">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="aspect-[4/3] animate-pulse rounded-[12px] bg-mist" />
+            ))}
+          </div>
+        </div>
+      </div>
+    ),
+  }
+);
 
 const FeaturedProjects = dynamic(
   () =>
@@ -73,18 +115,21 @@ const LazySectionDivider = dynamic(
 
 export default function Home() {
   return (
-    <main className="flex-1">
-      <Hero />
-      <StatsBand />
-      <QuickServices />
-      <MessagesSection />
-      <SectionDivider />
-      <RegionsSection />
-      <LazySectionDivider />
-      <FeaturedProjects />
-      <LatestNews />
-      <LatestDownloadsSection />
-      <CtaBand />
-    </main>
+    <>
+      <GovernmentOrgJsonLd />
+      <main className="flex-1">
+        <Hero />
+        <StatsBand />
+        <QuickServices />
+        <MessagesSection />
+        <SectionDivider />
+        <RegionsSection />
+        <LazySectionDivider />
+        <FeaturedProjects />
+        <LatestNews />
+        <LatestDownloadsSection />
+        <CtaBand />
+      </main>
+    </>
   );
 }
