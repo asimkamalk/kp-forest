@@ -260,37 +260,43 @@ async function seedSite() {
     },
   });
 
-  const nav = [
+  const nav: {
+    label: string;
+    href: string | null;
+    isDynamicRegions?: boolean;
+    isMegaMenu?: boolean;
+    children: { label: string; href: string }[];
+  }[] = [
     { label: "Home", href: "/", children: [] },
     {
-      label: "About Us",
-      href: null,
+      label: "About KP Forest",
+      href: "/about",
       children: [
         { label: "Introduction", href: "/about" },
         { label: "Vision & Mission", href: "/about/vision-mission" },
         { label: "Organogram", href: "/about/organogram" },
-        { label: "Messages", href: "/messages" },
-      ],
-    },
-    { label: "Regions", href: "/regions", dynamic: true, children: [] },
-    {
-      label: "Forest Operations",
-      href: null,
-      children: [
-        { label: "Markings", href: "/operations/markings" },
-        { label: "Harvestings", href: "/operations/harvestings" },
-        { label: "Actions", href: "/operations/actions" },
-        { label: "Monitoring", href: "/operations/monitoring" },
+        { label: "Functions & Mandate", href: "/about/mandate" },
       ],
     },
     {
-      label: "Plantation",
+      label: "Messages",
       href: null,
       children: [
-        { label: "Campaigns", href: "/plantation/campaigns" },
-        { label: "Targets & Achievements", href: "/plantation/targets" },
-        { label: "Success Stories", href: "/plantation/success-stories" },
+        {
+          label: "Message from the Chief Minister, KP",
+          href: "/messages/chief-minister",
+        },
+        {
+          label: "Message from the Secretary, Climate Change",
+          href: "/messages/secretary-climate-change",
+        },
       ],
+    },
+    {
+      label: "KP Forest Regions",
+      href: "/regions",
+      isDynamicRegions: true,
+      children: [],
     },
     {
       label: "Projects",
@@ -298,34 +304,38 @@ async function seedSite() {
       children: [
         { label: "Completed", href: "/projects/completed" },
         { label: "Ongoing", href: "/projects/ongoing" },
-        { label: "Future", href: "/projects/future" },
+        { label: "Future Projects", href: "/projects/future" },
       ],
     },
     {
-      label: "Media Centre",
+      label: "Downloads",
       href: null,
+      children: [
+        { label: "Publications", href: "/downloads/publications" },
+        { label: "Notifications", href: "/downloads/notifications" },
+        { label: "Acts, Rules & Policies", href: "/downloads/acts-rules-policies" },
+      ],
+    },
+    {
+      label: "Media Gallery",
+      href: null,
+      isMegaMenu: true,
       children: [
         { label: "Press Releases", href: "/media/press-releases" },
-        { label: "Press Notes", href: "/media/press-notes" },
+        { label: "Photo Gallery", href: "/media/photos" },
+        { label: "Video Gallery", href: "/media/videos" },
         { label: "News Coverage", href: "/media/news" },
-        { label: "Interviews", href: "/media/interviews" },
-        { label: "Myths vs Facts", href: "/media/myths-vs-facts" },
-        { label: "Rapid Response", href: "/media/rapid-response" },
       ],
     },
     {
-      label: "Public Services",
+      label: "Contact Us",
       href: null,
       children: [
-        { label: "Know Your Forest", href: "/know-your-forest" },
-        { label: "Wildlife", href: "/wildlife" },
-        { label: "Plant Request", href: "/services/plant-request" },
-        { label: "Research Request", href: "/services/research-request" },
-        { label: "Emergency Contacts", href: "/services/emergency-contacts" },
-        { label: "Downloads", href: "/downloads" },
+        { label: "Contact Directory", href: "/contact" },
+        { label: "Lodge a Complaint", href: "/contact/complaint" },
+        { label: "Submit a Suggestion", href: "/contact/suggestion" },
       ],
     },
-    { label: "Contact", href: "/contact", children: [] },
   ];
 
   if ((await prisma.navItem.count()) === 0) {
@@ -335,8 +345,8 @@ async function seedSite() {
           label: item.label,
           href: item.href,
           orderIndex: i,
-          isDynamicRegions: Boolean((item as any).dynamic),
-          isMegaMenu: item.children.length > 4,
+          isDynamicRegions: Boolean(item.isDynamicRegions),
+          isMegaMenu: Boolean(item.isMegaMenu),
         },
       });
       for (const [j, child] of item.children.entries()) {
@@ -384,43 +394,42 @@ async function seedSite() {
     });
   }
 
-  if ((await prisma.message.count()) === 0) {
-    await prisma.message.createMany({
-      data: [
-        {
-          slug: "message-from-the-minister",
-          kind: MessageKind.MINISTER,
-          personName: "Minister for Forestry, Environment & Wildlife",
-          designation: "Government of Khyber Pakhtunkhwa",
-          excerpt:
-            "Our forests are a public trust. This portal is part of our commitment to transparency in how that trust is managed.",
-          body: "Replace this text from the dashboard with the Minister's approved message.",
-          orderIndex: 0,
-          status: PublishStatus.PUBLISHED,
-        },
-        {
-          slug: "message-from-the-secretary",
-          kind: MessageKind.SECRETARY,
-          personName: "Secretary, Forestry, Environment & Wildlife Department",
-          designation: "Government of Khyber Pakhtunkhwa",
-          excerpt:
-            "Every division of the department now publishes its activities, targets and achievements in one place.",
-          body: "Replace this text from the dashboard with the Secretary's approved message.",
-          orderIndex: 1,
-          status: PublishStatus.PUBLISHED,
-        },
-        {
-          slug: "message-from-the-chief-conservator",
-          kind: MessageKind.CHIEF_CONSERVATOR,
-          personName: "Chief Conservator of Forests",
-          designation: "Forest Department, Khyber Pakhtunkhwa",
-          excerpt:
-            "From marking and harvesting to monitoring, our field operations are recorded and reported here.",
-          body: "Replace this text from the dashboard with the Chief Conservator's approved message.",
-          orderIndex: 2,
-          status: PublishStatus.PUBLISHED,
-        },
-      ],
+  const messages = [
+    {
+      slug: "chief-minister",
+      kind: MessageKind.CHIEF_MINISTER,
+      personName: "Chief Minister, Khyber Pakhtunkhwa",
+      designation: "Government of Khyber Pakhtunkhwa",
+      excerpt: "A message from the Chief Minister of Khyber Pakhtunkhwa.",
+      body: "The real message is to be entered from the dashboard.",
+      orderIndex: 0,
+      status: PublishStatus.PUBLISHED,
+    },
+    {
+      slug: "secretary-climate-change",
+      kind: MessageKind.SECRETARY_CLIMATE_CHANGE,
+      personName: "Secretary, Climate Change, Environment & Forestry Department",
+      designation: "Government of Khyber Pakhtunkhwa",
+      excerpt: "A message from the Secretary, Climate Change, Environment & Forestry Department.",
+      body: "The real message is to be entered from the dashboard.",
+      orderIndex: 1,
+      status: PublishStatus.PUBLISHED,
+    },
+  ] as const;
+
+  for (const msg of messages) {
+    await prisma.message.upsert({
+      where: { slug: msg.slug },
+      update: {
+        kind: msg.kind,
+        personName: msg.personName,
+        designation: msg.designation,
+        excerpt: msg.excerpt,
+        body: msg.body,
+        orderIndex: msg.orderIndex,
+        status: msg.status,
+      },
+      create: { ...msg },
     });
   }
 
