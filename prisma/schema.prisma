@@ -621,15 +621,18 @@ model Project {
 // ─────────────────────────────────────────────────────────────
 
 model Page {
-  id         String        @id @default(cuid())
-  slug       String        @unique
-  title      String
-  titleUr    String?
-  body       String
-  bodyUr     String?
-  coverImage String?
-  orderIndex Int           @default(0)
-  status     PublishStatus @default(DRAFT)
+  id             String        @id @default(cuid())
+  slug           String        @unique
+  title          String
+  titleUr        String?
+  summary        String?
+  body           String
+  bodyUr         String?
+  coverImage     String?
+  seoTitle       String?
+  seoDescription String?
+  orderIndex     Int           @default(0)
+  status         PublishStatus @default(DRAFT)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

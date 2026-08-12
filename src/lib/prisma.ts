@@ -3,7 +3,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
 
 /** Bump after `prisma generate` adds models so a running Next process drops stale clients. */
-const CLIENT_GENERATION = 2;
+const CLIENT_GENERATION = 3;
 
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
