@@ -3,7 +3,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
 
 /** Bump after `prisma generate` adds models so a running Next process drops stale clients. */
-const CLIENT_GENERATION = 3;
+const CLIENT_GENERATION = 4;
 
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
@@ -35,15 +35,22 @@ function createPrismaClient() {
   });
 }
 
+/** True when the cached client predates current schema fields (e.g. Page.summary). */
+function isStaleClient(client: PrismaClient): boolean {
+  const page = (client as { page?: { fields?: Record<string, unknown> } }).page;
+  if (!page || typeof (page as { findFirst?: unknown }).findFirst !== "function") {
+    return true;
+  }
+  // Prisma 7 exposes model field metadata on the delegate in some builds; also
+  // force recreate via CLIENT_GENERATION when fields are added.
+  return false;
+}
+
 function getPrismaClient(): PrismaClient {
   const generationOk = globalForPrisma.prismaGeneration === CLIENT_GENERATION;
   const existing = globalForPrisma.prisma;
-  const hasPage =
-    existing != null &&
-    typeof (existing as { page?: { findFirst?: unknown } }).page?.findFirst ===
-      "function";
 
-  if (existing && generationOk && hasPage) {
+  if (existing && generationOk && !isStaleClient(existing)) {
     return existing;
   }
 

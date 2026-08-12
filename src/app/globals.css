@@ -146,3 +146,19 @@ body {
 .hero-scroll-cue {
   animation: hero-scroll-cue 1.6s cubic-bezier(0.22, 1, 0.36, 1) infinite;
 }
+
+/* Organogram — print expands the tree; hide chrome */
+@media print {
+  .print\:hidden {
+    display: none !important;
+  }
+  .print\:block {
+    display: block !important;
+  }
+  .organogram-scroll {
+    overflow: visible !important;
+  }
+  .organogram-scroll > div {
+    min-width: 0 !important;
+  }
+}

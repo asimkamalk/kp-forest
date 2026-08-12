@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import {
   DownloadKind,
   MediaKind,
+  MessageKind,
   ProjectStatus,
   PublishStatus,
 } from "@prisma/client";
@@ -876,7 +877,20 @@ export const getSiteSettings = unstable_cache(
 
 /* --------------------------------- PAGES -------------------------------- */
 
-export async function getPageBySlug(slug: string) {
+export type PublicPage = {
+  id: string;
+  slug: string;
+  title: string;
+  titleUr: string | null;
+  summary: string | null;
+  body: string;
+  bodyUr: string | null;
+  coverImage: string | null;
+  seoTitle: string | null;
+  seoDescription: string | null;
+};
+
+export async function getPageBySlug(slug: string): Promise<PublicPage | null> {
   return unstable_cache(
     async () =>
       prisma.page.findFirst({
@@ -898,6 +912,160 @@ export async function getPageBySlug(slug: string) {
     { tags: ["pages", `page:${slug}`], revalidate: 3600 }
   )();
 }
+
+/* ----------------------------- ORGANOGRAM -------------------------------- */
+
+export type OrganogramOfficer = {
+  officeTitle: string;
+  name: string | null;
+  designation: string | null;
+  href: string | null;
+};
+
+export type OrganogramDivision = {
+  id: string;
+  name: string;
+  slug: string;
+  officerName: string | null;
+  officerDesignation: string | null;
+  href: string;
+};
+
+export type OrganogramCircle = {
+  id: string;
+  name: string;
+  slug: string;
+  officerName: string | null;
+  officerDesignation: string | null;
+  href: string;
+  divisions: OrganogramDivision[];
+};
+
+export type OrganogramRegion = {
+  id: string;
+  name: string;
+  slug: string;
+  code: string;
+  officerName: string | null;
+  officerDesignation: string | null;
+  href: string;
+  circles: OrganogramCircle[];
+};
+
+export type OrganogramTree = {
+  secretary: OrganogramOfficer;
+  chiefConservator: OrganogramOfficer;
+  regions: OrganogramRegion[];
+};
+
+export const getOrganogram = unstable_cache(
+  async (): Promise<OrganogramTree> => {
+    const [messages, regions] = await Promise.all([
+      prisma.message.findMany({
+        where: {
+          ...PUBLISHED,
+          kind: {
+            in: [
+              MessageKind.SECRETARY_CLIMATE_CHANGE,
+              MessageKind.SECRETARY,
+              MessageKind.CHIEF_CONSERVATOR,
+            ],
+          },
+        },
+        orderBy: { orderIndex: "asc" },
+        select: {
+          slug: true,
+          kind: true,
+          personName: true,
+          designation: true,
+        },
+      }),
+      prisma.region.findMany({
+        where: PUBLISHED,
+        orderBy: { orderIndex: "asc" },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          code: true,
+          officerName: true,
+          officerDesignation: true,
+          circles: {
+            where: PUBLISHED,
+            orderBy: { orderIndex: "asc" },
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              officerName: true,
+              officerDesignation: true,
+              divisions: {
+                where: PUBLISHED,
+                orderBy: { orderIndex: "asc" },
+                select: {
+                  id: true,
+                  name: true,
+                  slug: true,
+                  officerName: true,
+                  officerDesignation: true,
+                },
+              },
+            },
+          },
+        },
+      }),
+    ]);
+
+    const secretaryMsg =
+      messages.find((m) => m.kind === MessageKind.SECRETARY_CLIMATE_CHANGE) ??
+      messages.find((m) => m.kind === MessageKind.SECRETARY) ??
+      null;
+    const ccfMsg =
+      messages.find((m) => m.kind === MessageKind.CHIEF_CONSERVATOR) ?? null;
+
+    return {
+      secretary: {
+        officeTitle: "Secretary",
+        name: secretaryMsg?.personName ?? null,
+        designation: secretaryMsg?.designation ?? null,
+        href: secretaryMsg ? `/messages/${secretaryMsg.slug}` : null,
+      },
+      chiefConservator: {
+        officeTitle: "Chief Conservator of Forests",
+        name: ccfMsg?.personName ?? null,
+        designation: ccfMsg?.designation ?? null,
+        href: ccfMsg ? `/messages/${ccfMsg.slug}` : null,
+      },
+      regions: regions.map((region) => ({
+        id: region.id,
+        name: region.name,
+        slug: region.slug,
+        code: region.code,
+        officerName: region.officerName,
+        officerDesignation: region.officerDesignation,
+        href: `/regions/${region.slug}`,
+        circles: region.circles.map((circle) => ({
+          id: circle.id,
+          name: circle.name,
+          slug: circle.slug,
+          officerName: circle.officerName,
+          officerDesignation: circle.officerDesignation,
+          href: `/regions/${region.slug}/${circle.slug}`,
+          divisions: circle.divisions.map((division) => ({
+            id: division.id,
+            name: division.name,
+            slug: division.slug,
+            officerName: division.officerName,
+            officerDesignation: division.officerDesignation,
+            href: `/regions/${region.slug}/${circle.slug}/${division.slug}`,
+          })),
+        })),
+      })),
+    };
+  },
+  ["organogram"],
+  { tags: ["regions", "messages"], revalidate: 3600 }
+);
 
 /* -------------------------- EMERGENCY CONTACTS --------------------------- */
 

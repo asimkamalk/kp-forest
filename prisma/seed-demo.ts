@@ -580,10 +580,65 @@ async function seedGalleries(counts: Counts) {
 
 /* --------------------------------- MAIN ---------------------------------- */
 
+async function seedPages(counts: Counts) {
+  const placeholder =
+    `${DEMO_MARKER}\n\nThe department will supply the real content for this page. Replace this text from the dashboard Pages module.`;
+
+  const pages = [
+    {
+      slug: "about",
+      title: "About KP Forest",
+      summary:
+        "Introduction to the Forest Department, Government of Khyber Pakhtunkhwa.",
+      orderIndex: 0,
+    },
+    {
+      slug: "vision-mission",
+      title: "Vision & mission",
+      summary: "What the department aims to achieve and how it works.",
+      orderIndex: 1,
+    },
+    {
+      slug: "functions-mandate",
+      title: "Functions & mandate",
+      summary: "Statutory functions and the departmental mandate.",
+      orderIndex: 2,
+    },
+    {
+      slug: "free-plant-scheme",
+      title: "Free plant scheme",
+      summary: "How citizens request and collect free saplings.",
+      orderIndex: 3,
+    },
+  ] as const;
+
+  for (const page of pages) {
+    const existing = await prisma.page.findUnique({ where: { slug: page.slug } });
+    const data = {
+      title: page.title,
+      summary: page.summary,
+      body: placeholder,
+      orderIndex: page.orderIndex,
+      status: PublishStatus.PUBLISHED,
+      coverImage: IMAGE_PATHS[page.orderIndex % IMAGE_PATHS.length],
+    };
+    if (existing) {
+      await prisma.page.update({ where: { id: existing.id }, data });
+      bump(counts, "pages", "updated");
+    } else {
+      await prisma.page.create({
+        data: { slug: page.slug, ...data },
+      });
+      bump(counts, "pages", "created");
+    }
+  }
+}
+
 async function main() {
   console.log("→ demo seed (placeholder content only)");
   const counts: Counts = {};
 
+  await seedPages(counts);
   await seedProjects(counts);
   await seedMedia(counts);
   await seedDownloads(counts);
