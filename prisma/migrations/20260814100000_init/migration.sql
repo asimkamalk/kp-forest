@@ -1,3 +1,6 @@
+-- CreateSchema
+CREATE SCHEMA IF NOT EXISTS "public";
+
 -- CreateEnum
 CREATE TYPE "Role" AS ENUM ('SUPER_ADMIN', 'REGION_ADMIN', 'CIRCLE_ADMIN', 'DIVISION_ADMIN', 'EDITOR', 'VIEWER');
 
@@ -462,6 +465,26 @@ CREATE TABLE "Project" (
 );
 
 -- CreateTable
+CREATE TABLE "Page" (
+    "id" TEXT NOT NULL,
+    "slug" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "titleUr" TEXT,
+    "summary" TEXT,
+    "body" TEXT NOT NULL,
+    "bodyUr" TEXT,
+    "coverImage" TEXT,
+    "seoTitle" TEXT,
+    "seoDescription" TEXT,
+    "orderIndex" INTEGER NOT NULL DEFAULT 0,
+    "status" "PublishStatus" NOT NULL DEFAULT 'DRAFT',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Page_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "MediaPost" (
     "id" TEXT NOT NULL,
     "slug" TEXT NOT NULL,
@@ -681,6 +704,12 @@ CREATE UNIQUE INDEX "Project_slug_key" ON "Project"("slug");
 CREATE INDEX "Project_projectStatus_status_idx" ON "Project"("projectStatus", "status");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Page_slug_key" ON "Page"("slug");
+
+-- CreateIndex
+CREATE INDEX "Page_status_orderIndex_idx" ON "Page"("status", "orderIndex");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "MediaPost_slug_key" ON "MediaPost"("slug");
 
 -- CreateIndex
@@ -781,3 +810,4 @@ ALTER TABLE "ContactPerson" ADD CONSTRAINT "ContactPerson_divisionId_fkey" FOREI
 
 -- AddForeignKey
 ALTER TABLE "SocialLink" ADD CONSTRAINT "SocialLink_divisionId_fkey" FOREIGN KEY ("divisionId") REFERENCES "Division"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+

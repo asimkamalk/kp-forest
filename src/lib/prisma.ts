@@ -21,7 +21,7 @@ function createPrismaClient() {
     globalForPrisma.pgPool ??
     new Pool({
       connectionString,
-      max: 10,
+      max: process.env.NODE_ENV === "production" ? 1 : 10,
     });
 
   if (process.env.NODE_ENV !== "production") {
