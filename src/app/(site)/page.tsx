@@ -8,7 +8,6 @@ import { FeaturedProjects } from "@/components/site/featured-projects";
 import { LatestNews } from "@/components/site/latest-news";
 import { LatestDownloadsSection } from "@/components/site/latest-downloads-section";
 import { CtaBand } from "@/components/site/cta-band";
-import { GovernmentOrgJsonLd } from "@/components/site/government-org-json-ld";
 import { pageMeta } from "@/lib/seo";
 
 export const metadata = pageMeta(
@@ -19,21 +18,18 @@ export const metadata = pageMeta(
 
 export default function Home() {
   return (
-    <>
-      <GovernmentOrgJsonLd />
-      <main className="flex-1">
-        <Hero />
-        <StatsBand />
-        <QuickServices />
-        <MessagesSection />
-        <SectionDivider />
-        <RegionsSection />
-        <SectionDivider />
-        <FeaturedProjects />
-        <LatestNews />
-        <LatestDownloadsSection />
-        <CtaBand />
-      </main>
-    </>
+    <main className="flex-1">
+      <Hero />
+      <StatsBand />
+      <QuickServices />
+      <MessagesSection />
+      <SectionDivider />
+      <RegionsSection />
+      <SectionDivider />
+      <FeaturedProjects />
+      <LatestNews />
+      <LatestDownloadsSection />
+      <CtaBand />
+    </main>
   );
 }

@@ -5,11 +5,11 @@ import {
   useInView,
   useMotionValue,
   useMotionValueEvent,
-  useReducedMotion,
   useSpring,
   type Variants,
 } from "framer-motion";
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useHydratedReducedMotion } from "@/lib/use-hydrated-reduced-motion";
 
 /** Shared easing — one curve across the whole site keeps motion coherent. */
 export const EASE = [0.22, 1, 0.36, 1] as const;
@@ -41,7 +41,7 @@ export function Reveal({
   className?: string;
   once?: boolean;
 }) {
-  const reduce = useReducedMotion();
+  const reduce = useHydratedReducedMotion();
   const { x, y } = offset[direction];
 
   return (
@@ -73,7 +73,7 @@ export function Stagger({
   gap?: number;
   delay?: number;
 }) {
-  const reduce = useReducedMotion();
+  const reduce = useHydratedReducedMotion();
 
   const container: Variants = {
     hidden: {},
@@ -107,7 +107,7 @@ export function StaggerItem({
   className?: string;
   direction?: Direction;
 }) {
-  const reduce = useReducedMotion();
+  const reduce = useHydratedReducedMotion();
   const { x, y } = offset[direction];
 
   const item: Variants = {
@@ -129,62 +129,16 @@ export function StaggerItem({
   );
 }
 
-/** Word-by-word headline animation after mount — a plain h1 on SSR/hydration
- *  so prefers-reduced-motion cannot change the text tree (React #418).
- */
+/** Display heading. Animation stays on transform of the wrapper, never the tag tree. */
 export function AnimatedHeading({
   text,
   className,
-  delay = 0,
 }: {
   text: string;
   className?: string;
   delay?: number;
 }) {
-  const reduce = useReducedMotion();
-  const [live, setLive] = useState(false);
-
-  useEffect(() => {
-    setLive(true);
-  }, []);
-
-  if (!live || reduce) {
-    return <h1 className={className}>{text}</h1>;
-  }
-
-  return (
-    <motion.h1
-      className={className}
-      initial="hidden"
-      animate="show"
-      variants={{
-        hidden: {},
-        show: { transition: { staggerChildren: 0.06, delayChildren: delay } },
-      }}
-    >
-      {text.split(" ").map((word, i) => (
-        <span
-          key={`${word}-${i}`}
-          className="inline-block overflow-hidden pb-[0.08em] align-bottom"
-        >
-          <motion.span
-            className="inline-block"
-            variants={{
-              hidden: { y: "110%", opacity: 0 },
-              show: {
-                y: "0%",
-                opacity: 1,
-                transition: { duration: 0.7, ease: EASE },
-              },
-            }}
-          >
-            {word}
-            {"\u00A0"}
-          </motion.span>
-        </span>
-      ))}
-    </motion.h1>
-  );
+  return <h1 className={className}>{text}</h1>;
 }
 
 /** Springs from 0 → value on viewport entry. Mono + tabular-nums. */
@@ -200,7 +154,7 @@ export function Counter({
   className?: string;
 }) {
   const ref = useRef<HTMLSpanElement>(null);
-  const reduce = useReducedMotion();
+  const reduce = useHydratedReducedMotion();
   const inView = useInView(ref, { once: true, margin: "-80px" });
   const motionValue = useMotionValue(0);
   const spring = useSpring(motionValue, { stiffness: 90, damping: 22, mass: 0.8 });

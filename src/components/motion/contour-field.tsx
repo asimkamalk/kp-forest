@@ -1,7 +1,8 @@
 "use client";
 
-import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
+import { useHydratedReducedMotion } from "@/lib/use-hydrated-reduced-motion";
 
 type Density = "sparse" | "medium" | "dense";
 
@@ -28,7 +29,7 @@ export function ContourField({
   className?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const reduce = useReducedMotion();
+  const reduce = useHydratedReducedMotion();
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
   const y = useTransform(scrollYProgress, [0, 1], [0, reduce ? 0 : parallax]);
 

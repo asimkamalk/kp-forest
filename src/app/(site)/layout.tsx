@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { LenisProvider } from "@/components/providers/lenis-provider";
 import { Footer } from "@/components/site/footer";
+import { GovernmentOrgJsonLd } from "@/components/site/government-org-json-ld";
 import { Navbar } from "@/components/site/navbar";
 import { getNavigation, getSiteSettings, type NavNode } from "@/lib/data/site";
 
@@ -19,23 +20,26 @@ export default async function SiteLayout({ children }: { children: ReactNode }) 
   const emergencyHref = findEmergencyHref(nav);
 
   return (
-    <LenisProvider>
-      <a href="#main-content" className="skip-link">
-        Skip to content
-      </a>
-      <Navbar
-        items={nav}
-        siteName={settings.siteName}
-        siteNameUr={settings.siteNameUr}
-        logoUrl={settings.logoUrl}
-        emblemUrl={settings.emblemUrl}
-        helpline={settings.helplineNumber}
-        emergencyHref={emergencyHref}
-      />
-      <div id="main-content" tabIndex={-1} className="flex min-h-0 flex-1 flex-col outline-none">
-        {children}
-      </div>
-      <Footer settings={settings} nav={nav} />
-    </LenisProvider>
+    <>
+      <GovernmentOrgJsonLd settings={settings} />
+      <LenisProvider>
+        <a href="#main-content" className="skip-link">
+          Skip to content
+        </a>
+        <Navbar
+          items={nav}
+          siteName={settings.siteName}
+          siteNameUr={settings.siteNameUr}
+          logoUrl={settings.logoUrl}
+          emblemUrl={settings.emblemUrl}
+          helpline={settings.helplineNumber}
+          emergencyHref={emergencyHref}
+        />
+        <div id="main-content" tabIndex={-1} className="flex min-h-0 flex-1 flex-col outline-none">
+          {children}
+        </div>
+        <Footer settings={settings} nav={nav} />
+      </LenisProvider>
+    </>
   );
 }

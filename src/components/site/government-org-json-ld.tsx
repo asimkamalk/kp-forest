@@ -1,11 +1,19 @@
-import { getSiteSettings } from "@/lib/data/site";
+type Settings = {
+  siteName: string;
+  siteNameUr?: string | null;
+  tagline?: string | null;
+  logoUrl?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  helplineNumber?: string | null;
+  address?: string | null;
+};
 
 /**
- * GovernmentOrganization JSON-LD for the homepage.
- * Renders a script tag; safe for crawlers without affecting layout.
+ * JSON-LD must live outside client boundaries (not inside Lenis/Navbar).
+ * React cannot hydrate a <script> the browser has already parsed.
  */
-export async function GovernmentOrgJsonLd() {
-  const settings = await getSiteSettings();
+export function GovernmentOrgJsonLd({ settings }: { settings: Settings }) {
   const base = (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
 
   const data = {
@@ -42,10 +50,9 @@ export async function GovernmentOrgJsonLd() {
     },
   };
 
+  const json = JSON.stringify(data).replace(/</g, "\\u003c");
+
   return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
-    />
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: json }} />
   );
 }

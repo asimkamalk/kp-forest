@@ -1,14 +1,15 @@
 "use client";
 
-import { motion, useInView, useReducedMotion } from "framer-motion";
+import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { EASE } from "@/components/motion/reveal";
+import { useHydratedReducedMotion } from "@/lib/use-hydrated-reduced-motion";
 
 /** Single contour line between major sections — draws in on scroll. */
 export function SectionDivider({ className = "" }: { className?: string }) {
   const ref = useRef<SVGSVGElement>(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });
-  const reduce = useReducedMotion();
+  const reduce = useHydratedReducedMotion();
 
   return (
     <div className={`w-full overflow-hidden ${className}`} aria-hidden>

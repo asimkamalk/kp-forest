@@ -4,9 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
-import { useReducedMotion } from "framer-motion";
 import { ContourField } from "@/components/motion/contour-field";
 import { AnimatedHeading, Reveal } from "@/components/motion/reveal";
+import { useHydratedReducedMotion } from "@/lib/use-hydrated-reduced-motion";
 import { cn } from "@/lib/utils";
 
 export type HeroSlideData = {
@@ -30,7 +30,7 @@ type Props = {
 };
 
 export function HeroCarousel({ slides }: Props) {
-  const reduce = useReducedMotion();
+  const reduce = useHydratedReducedMotion();
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const [progressKey, setProgressKey] = useState(0);
@@ -119,7 +119,7 @@ export function HeroCarousel({ slides }: Props) {
     <section
       aria-roledescription="carousel"
       aria-label="Featured stories"
-      data-hero-paused={paused || reduce ? "true" : "false"}
+      data-hero-paused={paused ? "true" : "false"}
       className="relative isolate min-h-[70vh] w-full overflow-hidden bg-bark md:min-h-[88vh]"
       onMouseEnter={() => {
         hoverRef.current = true;
@@ -292,15 +292,13 @@ export function HeroCarousel({ slides }: Props) {
         </div>
       )}
 
-      {!reduce && (
-        <a
-          href="#stats-band"
-          className="hero-scroll-cue absolute bottom-10 left-1/2 z-[5] hidden text-mist md:block"
-          aria-label="Scroll to statistics"
-        >
-          <ChevronDown className="h-6 w-6" aria-hidden />
-        </a>
-      )}
+      <a
+        href="#stats-band"
+        className="hero-scroll-cue absolute bottom-10 left-1/2 z-[5] hidden text-mist md:block"
+        aria-label="Scroll to statistics"
+      >
+        <ChevronDown className="h-6 w-6" aria-hidden />
+      </a>
     </section>
   );
 }

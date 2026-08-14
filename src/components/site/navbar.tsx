@@ -4,9 +4,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, Menu, Phone, X } from "lucide-react";
 import type { NavNode } from "@/lib/data/site";
+import { useHydratedReducedMotion } from "@/lib/use-hydrated-reduced-motion";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -31,7 +32,7 @@ export function Navbar({
   emergencyHref,
 }: Props) {
   const pathname = usePathname();
-  const reduce = useReducedMotion();
+  const reduce = useHydratedReducedMotion();
   const [scrolled, setScrolled] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -311,7 +312,7 @@ export function Navbar({
 
 function MobileNav({ items }: { items: NavNode[] }) {
   const [expanded, setExpanded] = useState<string | null>(null);
-  const reduce = useReducedMotion();
+  const reduce = useHydratedReducedMotion();
   const baseId = useId();
 
   return (
