@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { MediaKind } from "@prisma/client";
 import { Reveal, Stagger, StaggerItem } from "@/components/motion/reveal";
+import { formatDisplayDate } from "@/lib/format-date";
 import { getLatestMedia } from "@/lib/data/site";
 
 const KIND_LABEL: Record<string, string> = {
@@ -14,17 +15,6 @@ function mediaHref(kind: string, slug: string) {
   if (kind === MediaKind.PRESS_RELEASE) return `/media/press-releases/${slug}`;
   if (kind === MediaKind.NEWS_COVERAGE) return "/media/news";
   return "/media/press-releases";
-}
-
-function formatDate(value: Date | string | null) {
-  if (!value) return null;
-  const d = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(d.getTime())) return null;
-  return d.toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
 }
 
 function toDateTimeAttr(value: Date | string | null) {
@@ -96,12 +86,12 @@ export async function LatestNews() {
                   </div>
                   <div className="flex flex-1 flex-col p-5 md:p-6">
                     <div className="flex flex-wrap items-center gap-2">
-                      {formatDate(featured.publishedAt) && (
+                      {formatDisplayDate(featured.publishedAt) && (
                         <time
                           dateTime={toDateTimeAttr(featured.publishedAt)}
                           className="font-mono text-xs text-moss"
                         >
-                          {formatDate(featured.publishedAt)}
+                          {formatDisplayDate(featured.publishedAt)}
                         </time>
                       )}
                       <span className="rounded-[8px] bg-mist px-2 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wider text-bark">
@@ -129,12 +119,12 @@ export async function LatestNews() {
                     className="group block py-4 transition-colors hover:bg-paper/80"
                   >
                     <div className="flex flex-wrap items-center gap-2">
-                      {formatDate(post.publishedAt) && (
+                      {formatDisplayDate(post.publishedAt) && (
                         <time
                           dateTime={toDateTimeAttr(post.publishedAt)}
                           className="font-mono text-xs text-moss"
                         >
-                          {formatDate(post.publishedAt)}
+                          {formatDisplayDate(post.publishedAt)}
                         </time>
                       )}
                       <span className="rounded-[8px] bg-mist px-2 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wider text-bark">

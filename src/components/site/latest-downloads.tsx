@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useTransition } from "react";
 import { ArrowRight, Download } from "lucide-react";
 import { Reveal, Stagger, StaggerItem } from "@/components/motion/reveal";
+import { formatDisplayDate } from "@/lib/format-date";
 import type { PublicDownload } from "@/lib/data/site";
 import {
   DOWNLOAD_KIND_LABELS,
@@ -11,17 +12,6 @@ import {
   formatFileSize,
 } from "@/lib/validators/download";
 import { incrementDownloadCount } from "@/server/actions/download";
-
-function formatDate(value: Date | string | null) {
-  if (!value) return null;
-  const d = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(d.getTime())) return null;
-  return d.toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
 
 function toDateTimeAttr(value: Date | string | null) {
   if (!value) return undefined;
@@ -77,7 +67,7 @@ export function LatestDownloads({ items }: Props) {
         ) : (
           <Stagger className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" gap={0.08}>
             {items.map((item) => {
-              const dateLabel = formatDate(item.documentDate);
+              const dateLabel = formatDisplayDate(item.documentDate);
               return (
                 <StaggerItem key={item.id}>
                   <a

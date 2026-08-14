@@ -10,6 +10,7 @@ import {
   formatFileSize,
 } from "@/lib/validators/download";
 import { incrementDownloadCount } from "@/server/actions/download";
+import { formatDisplayDate } from "@/lib/format-date";
 import type { PublicDownload } from "@/lib/data/site";
 
 type YearGroup = {
@@ -108,7 +109,7 @@ export function DownloadsList({
                       <p className="mt-1 font-mono text-xs text-moss">
                         {formatFileSize(item.fileSize)}
                         {item.documentDate
-                          ? ` · ${new Date(item.documentDate).toLocaleDateString("en-GB")}`
+                          ? ` · ${formatDisplayDate(item.documentDate)}`
                           : null}
                       </p>
                     </div>

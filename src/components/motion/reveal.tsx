@@ -129,9 +129,8 @@ export function StaggerItem({
   );
 }
 
-/** Word-by-word headline animation (display face on the consumer).
- *  Always the same DOM on server and client — branching on useReducedMotion()
- *  caused React #418 (text mismatch) because the hook is null on SSR.
+/** Word-by-word headline animation after mount — a plain h1 on SSR/hydration
+ *  so prefers-reduced-motion cannot change the text tree (React #418).
  */
 export function AnimatedHeading({
   text,
@@ -143,7 +142,15 @@ export function AnimatedHeading({
   delay?: number;
 }) {
   const reduce = useReducedMotion();
-  const instant = !!reduce;
+  const [live, setLive] = useState(false);
+
+  useEffect(() => {
+    setLive(true);
+  }, []);
+
+  if (!live || reduce) {
+    return <h1 className={className}>{text}</h1>;
+  }
 
   return (
     <motion.h1
@@ -152,11 +159,7 @@ export function AnimatedHeading({
       animate="show"
       variants={{
         hidden: {},
-        show: {
-          transition: instant
-            ? { staggerChildren: 0, delayChildren: 0 }
-            : { staggerChildren: 0.06, delayChildren: delay },
-        },
+        show: { transition: { staggerChildren: 0.06, delayChildren: delay } },
       }}
     >
       {text.split(" ").map((word, i) => (
@@ -167,11 +170,11 @@ export function AnimatedHeading({
           <motion.span
             className="inline-block"
             variants={{
-              hidden: instant ? { y: "0%", opacity: 1 } : { y: "110%", opacity: 0 },
+              hidden: { y: "110%", opacity: 0 },
               show: {
                 y: "0%",
                 opacity: 1,
-                transition: { duration: instant ? 0 : 0.7, ease: EASE },
+                transition: { duration: 0.7, ease: EASE },
               },
             }}
           >

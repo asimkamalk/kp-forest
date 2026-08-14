@@ -6,7 +6,7 @@ import { getFeaturedProjects } from "@/lib/data/site";
 
 function formatPkr(value: number | null) {
   if (value == null) return null;
-  return `PKR ${value.toLocaleString("en-PK")}`;
+  return `PKR ${value.toLocaleString("en-GB")}`;
 }
 
 export async function FeaturedProjects() {

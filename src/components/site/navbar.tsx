@@ -108,7 +108,7 @@ export function Navbar({
       </div>
 
       <motion.header
-        initial={reduce ? false : { y: -24, opacity: 0 }}
+        initial={false}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6, ease: EASE }}
         className={`sticky top-0 z-50 w-full transition-[background-color,box-shadow,backdrop-filter] duration-300 ${

@@ -1,5 +1,6 @@
 import { ProjectStatus, PublishStatus } from "@prisma/client";
 import { z } from "zod";
+import { formatDisplayDate } from "@/lib/format-date";
 import { publishStatusSchema } from "@/lib/validators/message";
 import { toDateInput } from "@/lib/validators/hero";
 
@@ -60,11 +61,7 @@ export function formatDateRange(
     if (!v) return null;
     const d = v instanceof Date ? v : new Date(v);
     if (Number.isNaN(d.getTime())) return null;
-    return d.toLocaleDateString("en-GB", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
+    return formatDisplayDate(d);
   };
   const a = fmt(start);
   const b = fmt(end);

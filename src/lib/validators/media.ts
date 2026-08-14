@@ -1,5 +1,6 @@
 import { MediaKind, PublishStatus } from "@prisma/client";
 import { z } from "zod";
+import { formatDisplayDate } from "@/lib/format-date";
 import { publishStatusSchema } from "@/lib/validators/message";
 import { toDateInput } from "@/lib/validators/hero";
 
@@ -103,14 +104,7 @@ export type GalleryAlbumInput = z.infer<typeof galleryAlbumSchema>;
 export { toDateInput };
 
 export function formatMediaDate(value: Date | string | null | undefined): string | null {
-  if (!value) return null;
-  const d = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(d.getTime())) return null;
-  return d.toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
+  return formatDisplayDate(value);
 }
 
 export function toDateTimeAttr(value: Date | string | null | undefined): string | undefined {
