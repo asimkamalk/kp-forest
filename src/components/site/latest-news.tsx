@@ -10,6 +10,12 @@ const KIND_LABEL: Record<string, string> = {
   [MediaKind.NEWS_COVERAGE]: "News",
 };
 
+function mediaHref(kind: string, slug: string) {
+  if (kind === MediaKind.PRESS_RELEASE) return `/media/press-releases/${slug}`;
+  if (kind === MediaKind.NEWS_COVERAGE) return "/media/news";
+  return "/media/press-releases";
+}
+
 function formatDate(value: Date | string | null) {
   if (!value) return null;
   const d = value instanceof Date ? value : new Date(value);
@@ -71,7 +77,7 @@ export async function LatestNews() {
             {featured && (
               <Reveal className="lg:col-span-2">
                 <Link
-                  href={`/media/${featured.slug}`}
+                  href={mediaHref(featured.kind, featured.slug)}
                   className="group flex h-full flex-col overflow-hidden rounded-[12px] border border-mist bg-paper shadow-[var(--shadow-card)] transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1 hover:shadow-[var(--shadow-card-hover)]"
                 >
                   <div
@@ -119,7 +125,7 @@ export async function LatestNews() {
               {rest.map((post) => (
                 <StaggerItem key={post.id}>
                   <Link
-                    href={`/media/${post.slug}`}
+                    href={mediaHref(post.kind, post.slug)}
                     className="group block py-4 transition-colors hover:bg-paper/80"
                   >
                     <div className="flex flex-wrap items-center gap-2">
