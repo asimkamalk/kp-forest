@@ -388,8 +388,8 @@ async function seedSite() {
           subtitle: "Urban and rural plantation campaigns across every district of the province.",
           imageUrl: "/hero/plantation.jpg",
           imageAlt: "Plantation campaign in Khyber Pakhtunkhwa",
-          ctaLabel: "View Campaigns",
-          ctaHref: "/plantation/campaigns",
+          ctaLabel: "Request plants",
+          ctaHref: "/services/plant-request",
           orderIndex: 1,
           status: PublishStatus.PUBLISHED,
         },
@@ -406,6 +406,11 @@ async function seedSite() {
       ],
     });
   }
+
+  await prisma.heroSlide.updateMany({
+    where: { ctaHref: "/plantation/campaigns" },
+    data: { ctaHref: "/services/plant-request", ctaLabel: "Request plants" },
+  });
 
   const messages = [
     {

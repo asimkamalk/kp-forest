@@ -2,12 +2,14 @@ import type { NextConfig } from "next";
 
 const ContentSecurityPolicy = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
   "connect-src 'self' https:",
   "media-src 'self' https: blob:",
+  "worker-src 'self' blob:",
+  "child-src 'self' blob:",
   "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com",
   "frame-ancestors 'none'",
   "base-uri 'self'",
@@ -53,6 +55,11 @@ const nextConfig: NextConfig = {
       {
         source: "/projects",
         destination: "/projects/ongoing",
+        permanent: false,
+      },
+      {
+        source: "/plantation/campaigns",
+        destination: "/services/plant-request",
         permanent: false,
       },
     ];
