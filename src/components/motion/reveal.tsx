@@ -3,9 +3,6 @@
 import {
   motion,
   useInView,
-  useMotionValue,
-  useMotionValueEvent,
-  useSpring,
   type Variants,
 } from "framer-motion";
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -141,7 +138,7 @@ export function AnimatedHeading({
   return <h1 className={className}>{text}</h1>;
 }
 
-/** Springs from 0 → value on viewport entry. Mono + tabular-nums. */
+/** Formats a homepage figure. Count-up is skipped so the stored value cannot stick at 0. */
 export function Counter({
   value,
   suffix = "",
@@ -153,39 +150,14 @@ export function Counter({
   prefix?: string;
   className?: string;
 }) {
-  const ref = useRef<HTMLSpanElement>(null);
-  const reduce = useHydratedReducedMotion();
-  const inView = useInView(ref, { once: true, margin: "-80px" });
-  const motionValue = useMotionValue(0);
-  const spring = useSpring(motionValue, { stiffness: 90, damping: 22, mass: 0.8 });
   const places = Number.isInteger(value)
     ? 0
     : Math.min(2, (String(value).split(".")[1] ?? "").length || 1);
-  const [display, setDisplay] = useState(0);
-
-  useMotionValueEvent(spring, "change", (latest) => {
-    const next = places === 0 ? Math.round(latest) : Number(latest.toFixed(places));
-    setDisplay(next);
-  });
-
-  useEffect(() => {
-    if (reduce) {
-      setDisplay(value);
-      return;
-    }
-    if (inView) {
-      motionValue.set(value);
-    }
-  }, [inView, value, reduce, motionValue]);
 
   return (
-    <span
-      ref={ref}
-      suppressHydrationWarning
-      className={`data font-mono tabular-nums ${className ?? ""}`.trim()}
-    >
+    <span className={`data font-mono tabular-nums ${className ?? ""}`.trim()}>
       {prefix}
-      {display.toLocaleString("en-GB", {
+      {value.toLocaleString("en-GB", {
         minimumFractionDigits: places > 0 ? Math.min(places, 1) : 0,
         maximumFractionDigits: places,
       })}

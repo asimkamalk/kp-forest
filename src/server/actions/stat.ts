@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidateTag } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { Role } from "@prisma/client";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -34,6 +34,12 @@ async function writeAudit(
   });
 }
 
+function refreshPublicStats() {
+  updateTag("stats");
+  revalidatePath("/");
+  revalidatePath("/about");
+}
+
 export async function createStatCounter(
   input: unknown
 ): Promise<ActionResult<{ id: string }>> {
@@ -44,7 +50,7 @@ export async function createStatCounter(
   try {
     const row = await prisma.statCounter.create({ data: parsed.data });
     await writeAudit(session.user.id, "CREATE", row.id, null, row);
-    revalidateTag("stats", "max");
+    refreshPublicStats();
     return actionOk({ id: row.id });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Could not create statistic";
@@ -66,7 +72,7 @@ export async function updateStatCounter(
   try {
     const row = await prisma.statCounter.update({ where: { id }, data: parsed.data });
     await writeAudit(session.user.id, "UPDATE", row.id, before, row);
-    revalidateTag("stats", "max");
+    refreshPublicStats();
     return actionOk({ id: row.id });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Could not update statistic";
@@ -82,7 +88,7 @@ export async function deleteStatCounter(id: string): Promise<ActionResult<{ id: 
   try {
     await prisma.statCounter.delete({ where: { id } });
     await writeAudit(session.user.id, "DELETE", id, before, null);
-    revalidateTag("stats", "max");
+    refreshPublicStats();
     return actionOk({ id });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Could not delete statistic";
@@ -106,7 +112,7 @@ export async function reorderStatCounters(
     await writeAudit(session.user.id, "UPDATE", "reorder", null, {
       orderedIds: parsed.data.orderedIds,
     });
-    revalidateTag("stats", "max");
+    refreshPublicStats();
     return actionOk({ count: parsed.data.orderedIds.length });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Could not reorder statistics";
@@ -125,7 +131,7 @@ export async function publishStatCounter(id: string): Promise<ActionResult<{ id:
       data: { status: "PUBLISHED" },
     });
     await writeAudit(session.user.id, "PUBLISH", id, before, row);
-    revalidateTag("stats", "max");
+    refreshPublicStats();
     return actionOk({ id: row.id });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Could not publish statistic";
