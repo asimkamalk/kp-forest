@@ -129,7 +129,10 @@ export function StaggerItem({
   );
 }
 
-/** Word-by-word headline animation (display face on the consumer). */
+/** Word-by-word headline animation (display face on the consumer).
+ *  Always the same DOM on server and client — branching on useReducedMotion()
+ *  caused React #418 (text mismatch) because the hook is null on SSR.
+ */
 export function AnimatedHeading({
   text,
   className,
@@ -140,10 +143,7 @@ export function AnimatedHeading({
   delay?: number;
 }) {
   const reduce = useReducedMotion();
-
-  if (reduce) {
-    return <h1 className={className}>{text}</h1>;
-  }
+  const instant = !!reduce;
 
   return (
     <motion.h1
@@ -152,7 +152,11 @@ export function AnimatedHeading({
       animate="show"
       variants={{
         hidden: {},
-        show: { transition: { staggerChildren: 0.06, delayChildren: delay } },
+        show: {
+          transition: instant
+            ? { staggerChildren: 0, delayChildren: 0 }
+            : { staggerChildren: 0.06, delayChildren: delay },
+        },
       }}
     >
       {text.split(" ").map((word, i) => (
@@ -163,11 +167,11 @@ export function AnimatedHeading({
           <motion.span
             className="inline-block"
             variants={{
-              hidden: { y: "110%", opacity: 0 },
+              hidden: instant ? { y: "0%", opacity: 1 } : { y: "110%", opacity: 0 },
               show: {
                 y: "0%",
                 opacity: 1,
-                transition: { duration: 0.7, ease: EASE },
+                transition: { duration: instant ? 0 : 0.7, ease: EASE },
               },
             }}
           >
@@ -200,7 +204,7 @@ export function Counter({
   const places = Number.isInteger(value)
     ? 0
     : Math.min(2, (String(value).split(".")[1] ?? "").length || 1);
-  const [display, setDisplay] = useState(reduce ? value : 0);
+  const [display, setDisplay] = useState(0);
 
   useMotionValueEvent(spring, "change", (latest) => {
     const next = places === 0 ? Math.round(latest) : Number(latest.toFixed(places));
@@ -217,12 +221,14 @@ export function Counter({
     }
   }, [inView, value, reduce, motionValue]);
 
-  const shown = reduce ? value : display;
-
   return (
-    <span ref={ref} className={`data font-mono tabular-nums ${className ?? ""}`.trim()}>
+    <span
+      ref={ref}
+      suppressHydrationWarning
+      className={`data font-mono tabular-nums ${className ?? ""}`.trim()}
+    >
       {prefix}
-      {shown.toLocaleString(undefined, {
+      {display.toLocaleString("en-GB", {
         minimumFractionDigits: places > 0 ? Math.min(places, 1) : 0,
         maximumFractionDigits: places,
       })}

@@ -108,7 +108,7 @@ export function DownloadsList({
                       <p className="mt-1 font-mono text-xs text-moss">
                         {formatFileSize(item.fileSize)}
                         {item.documentDate
-                          ? ` · ${new Date(item.documentDate).toLocaleDateString()}`
+                          ? ` · ${new Date(item.documentDate).toLocaleDateString("en-GB")}`
                           : null}
                       </p>
                     </div>
