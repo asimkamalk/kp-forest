@@ -1,33 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
-import { Fraunces, Public_Sans, IBM_Plex_Mono, Noto_Nastaliq_Urdu } from "next/font/google";
 import Link from "next/link";
 import { logClientError } from "@/server/actions/log-error";
 import "./globals.css";
-
-const fraunces = Fraunces({
-  subsets: ["latin"],
-  variable: "--font-fraunces",
-  axes: ["SOFT", "WONK", "opsz"],
-  display: "swap",
-});
-const publicSans = Public_Sans({
-  subsets: ["latin"],
-  variable: "--font-public-sans",
-  display: "swap",
-});
-const plexMono = IBM_Plex_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500"],
-  variable: "--font-plex-mono",
-  display: "swap",
-});
-const nastaliq = Noto_Nastaliq_Urdu({
-  subsets: ["arabic"],
-  variable: "--font-nastaliq",
-  display: "swap",
-});
 
 type Props = {
   error: Error & { digest?: string };
@@ -36,7 +12,7 @@ type Props = {
 
 /**
  * Replaces the root layout when it fails. Must render its own <html> and <body>.
- * Never surface the error message or stack to the visitor.
+ * No next/font here — that CSS is preloaded on every page and unused on success.
  */
 export default function GlobalError({ error, reset }: Props) {
   useEffect(() => {
@@ -49,10 +25,7 @@ export default function GlobalError({ error, reset }: Props) {
   }, [error]);
 
   return (
-    <html
-      lang="en"
-      className={`${fraunces.variable} ${publicSans.variable} ${plexMono.variable} ${nastaliq.variable} h-full antialiased`}
-    >
+    <html lang="en" className="h-full antialiased">
       <body className="flex min-h-full flex-col bg-paper text-bark">
         <main className="flex flex-1 flex-col items-center justify-center px-6 py-24 text-center">
           <p className="eyebrow text-resin">Error</p>

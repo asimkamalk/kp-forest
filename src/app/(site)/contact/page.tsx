@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Mail, Phone } from "lucide-react";
 import { Reveal } from "@/components/motion/reveal";
 import { ContactDirectory } from "@/components/site/contact/contact-directory";
-import { OfficeMap } from "@/components/site/office-map";
+import { OfficeMap } from "@/components/site/office-map-lazy";
 import { getContactDirectory, getSiteSettings } from "@/lib/data/site";
 import { pageMeta } from "@/lib/seo";
 

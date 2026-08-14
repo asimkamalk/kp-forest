@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, MapPin } from "lucide-react";
 import { Reveal, Stagger, StaggerItem } from "@/components/motion/reveal";
-import { RegionMap } from "@/components/site/region-map";
+import { RegionMap } from "@/components/site/region-map-lazy";
 import {
   getPublishedRegionSlugs,
   getRegionWithCircles,

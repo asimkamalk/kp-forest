@@ -11,9 +11,11 @@ const publicSans = Public_Sans({
 });
 const plexMono = IBM_Plex_Mono({
   subsets: ["latin"], weight: ["400", "500"], variable: "--font-plex-mono", display: "swap",
+  preload: false,
 });
 const nastaliq = Noto_Nastaliq_Urdu({
   subsets: ["arabic"], variable: "--font-nastaliq", display: "swap",
+  preload: false,
 });
 
 export const metadata: Metadata = {
