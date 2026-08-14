@@ -138,7 +138,7 @@ export function AnimatedHeading({
   return <h1 className={className}>{text}</h1>;
 }
 
-/** Formats a homepage figure. Count-up is skipped so the stored value cannot stick at 0. */
+/** Counts 0 → value on viewport entry. Always settles on `value` (no missed spring events). */
 export function Counter({
   value,
   suffix = "",
@@ -150,14 +150,56 @@ export function Counter({
   prefix?: string;
   className?: string;
 }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const reduce = useHydratedReducedMotion();
+  const inView = useInView(ref, { once: true, amount: 0.4 });
   const places = Number.isInteger(value)
     ? 0
     : Math.min(2, (String(value).split(".")[1] ?? "").length || 1);
+  const [display, setDisplay] = useState(0);
+
+  useEffect(() => {
+    if (reduce) {
+      setDisplay(value);
+      return;
+    }
+    if (!inView) return;
+
+    const duration = 900;
+    let frame = 0;
+    const start = performance.now();
+
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / duration);
+      const eased = 1 - (1 - t) ** 3;
+      const current = value * eased;
+      const next =
+        places === 0 ? Math.round(current) : Number(current.toFixed(places));
+      setDisplay(next);
+      if (t < 1) {
+        frame = requestAnimationFrame(tick);
+      } else {
+        setDisplay(value);
+      }
+    };
+
+    frame = requestAnimationFrame(tick);
+    const safety = window.setTimeout(() => setDisplay(value), duration + 200);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      window.clearTimeout(safety);
+    };
+  }, [inView, value, reduce, places]);
 
   return (
-    <span className={`data font-mono tabular-nums ${className ?? ""}`.trim()}>
+    <span
+      ref={ref}
+      suppressHydrationWarning
+      className={`data font-mono tabular-nums ${className ?? ""}`.trim()}
+    >
       {prefix}
-      {value.toLocaleString("en-GB", {
+      {display.toLocaleString("en-GB", {
         minimumFractionDigits: places > 0 ? Math.min(places, 1) : 0,
         maximumFractionDigits: places,
       })}
