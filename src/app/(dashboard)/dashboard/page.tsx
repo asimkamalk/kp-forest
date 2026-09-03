@@ -6,12 +6,10 @@ import {
   getRecentAuditLogs,
   getReviewQueue,
 } from "@/lib/data/dashboard";
+import { formatDisplayDateTime } from "@/lib/format-date";
 
 function formatWhen(date: Date) {
-  return new Intl.DateTimeFormat("en-PK", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
+  return formatDisplayDateTime(date) ?? "";
 }
 
 export default async function DashboardOverviewPage() {

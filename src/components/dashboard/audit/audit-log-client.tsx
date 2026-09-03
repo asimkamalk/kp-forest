@@ -5,6 +5,7 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { exportAuditLogsCsv } from "@/server/actions/audit";
+import { formatDisplayDateTime } from "@/lib/format-date";
 import { cn } from "@/lib/utils";
 
 export type AuditRow = {
@@ -258,7 +259,7 @@ function AuditRowBlock({
           </button>
         </td>
         <td className="px-3 py-2.5 font-mono text-xs text-moss">
-          {new Date(row.createdAt).toLocaleString()}
+          {formatDisplayDateTime(row.createdAt) ?? "—"}
         </td>
         <td className="px-3 py-2.5">
           <p className="font-medium text-bark">{row.userName ?? "—"}</p>
