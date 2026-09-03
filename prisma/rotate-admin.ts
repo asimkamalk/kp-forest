@@ -12,17 +12,16 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
 import bcrypt from "bcryptjs";
 
-const legacyAdminEmail = process.env.LEGACY_ADMIN_EMAIL;
-const email = process.env.SEED_ADMIN_EMAIL;
-const password = process.env.SEED_ADMIN_PASSWORD;
-
-const connectionString = process.env.DATABASE_URL;
-if (!connectionString) {
-  throw new Error("DATABASE_URL is not set");
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) throw new Error(`${name} is not set`);
+  return value;
 }
 
-if (!email) throw new Error("SEED_ADMIN_EMAIL is not set");
-if (!password) throw new Error("SEED_ADMIN_PASSWORD is not set");
+const email = requireEnv("SEED_ADMIN_EMAIL");
+const password = requireEnv("SEED_ADMIN_PASSWORD");
+const connectionString = requireEnv("DATABASE_URL");
+const legacyAdminEmail = process.env.LEGACY_ADMIN_EMAIL;
 
 const pool = new Pool({ connectionString });
 const adapter = new PrismaPg(pool);
