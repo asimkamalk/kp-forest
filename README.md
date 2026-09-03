@@ -68,14 +68,17 @@ npm run dev
 
 ---
 
-## **⚠ Rotate default admin credentials**
+## **Super admin credentials**
 
-`npm run db:seed` creates:
+Bootstrap or rotate the super admin without re-seeding everything:
 
-- **Email:** `admin@forest.kp.gov.pk`
-- **Password:** `ChangeMe123!`
+```bash
+npm run db:rotate-admin
+```
 
-**Change this password immediately** after first login (or replace the user before any shared/staging/production deploy). Leaving the seeded password in place is a critical security failure.
+Set `SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD` in `.env` before running (see `.env.example`). `npm run db:seed` uses the same variables when creating the admin user.
+
+**Do not commit real passwords to git.** Use env vars on Vercel / Neon for production.
 
 ---
 

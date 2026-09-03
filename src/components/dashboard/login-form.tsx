@@ -58,7 +58,7 @@ export function LoginForm({ nextPath }: Props) {
             "h-10 w-full rounded-[8px] border border-mist bg-paper px-3 text-sm text-bark outline-none transition-colors placeholder:text-moss/70 focus-visible:border-resin focus-visible:ring-2 focus-visible:ring-resin/30",
             errors.email && "border-resin"
           )}
-          placeholder="admin@forest.kp.gov.pk"
+          placeholder="super admin email"
           {...register("email")}
         />
         {errors.email && (

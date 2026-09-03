@@ -594,11 +594,31 @@ async function seedSite() {
 }
 
 async function seedAdmin() {
-  const email = "admin@forest.kp.gov.pk";
-  const passwordHash = await bcrypt.hash("ChangeMe123!", 12);
+  const email = process.env.SEED_ADMIN_EMAIL;
+  const password = process.env.SEED_ADMIN_PASSWORD;
+  const legacyAdminEmail = process.env.LEGACY_ADMIN_EMAIL;
+
+  if (!email) {
+    throw new Error("SEED_ADMIN_EMAIL is not set");
+  }
+  if (!password) {
+    throw new Error("SEED_ADMIN_PASSWORD is not set");
+  }
+
+  const passwordHash = await bcrypt.hash(password, 12);
+
+  // Optional: delete legacy admin only when explicitly enabled.
+  if (
+    legacyAdminEmail &&
+    process.env.DELETE_LEGACY_ADMIN === "true" &&
+    email !== legacyAdminEmail
+  ) {
+    await prisma.user.deleteMany({ where: { email: legacyAdminEmail } });
+  }
+
   await prisma.user.upsert({
     where: { email },
-    update: {},
+    update: { passwordHash, role: Role.SUPER_ADMIN, isActive: true },
     create: {
       email,
       name: "System Administrator",
@@ -623,7 +643,7 @@ async function main() {
     prisma.division.count(),
   ]);
   console.log(`✓ done — ${r} regions, ${c} circles, ${d} divisions`);
-  console.log("  login: admin@forest.kp.gov.pk / ChangeMe123!  (change this)");
+  console.log("  super admin updated (from SEED_ADMIN_EMAIL)");
 }
 
 main()
