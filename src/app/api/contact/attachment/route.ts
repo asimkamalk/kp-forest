@@ -1,22 +1,12 @@
 import { NextResponse } from "next/server";
-import { mkdir, writeFile } from "fs/promises";
-import path from "path";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { detectFileSignature } from "@/lib/file-signature";
 import { rateLimit } from "@/lib/rate-limit";
+import { storePublicFile } from "@/lib/store-upload";
 
 const MAX_BYTES = 5 * 1024 * 1024;
 const ALLOWED_EXT = new Set(["jpg", "jpeg", "png", "webp", "gif", "pdf"]);
-const UPLOAD_ROOT = path.join(process.cwd(), "public", "uploads");
-
-function resolveUnderUploadRoot(...segments: string[]): string | null {
-  const resolved = path.resolve(UPLOAD_ROOT, ...segments);
-  const root = path.resolve(UPLOAD_ROOT);
-  const prefix = root.endsWith(path.sep) ? root : root + path.sep;
-  if (resolved !== root && !resolved.startsWith(prefix)) return null;
-  return resolved;
-}
 
 async function clientIp(): Promise<string> {
   const h = await headers();
@@ -68,32 +58,30 @@ export async function POST(request: Request) {
     );
   }
 
-  const contactDir = resolveUnderUploadRoot("contact");
-  if (!contactDir) {
-    return NextResponse.json({ ok: false, error: "Invalid upload path" }, { status: 400 });
-  }
-  await mkdir(contactDir, { recursive: true });
-
-  const safeName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${detected.extension}`;
-  const absPath = resolveUnderUploadRoot("contact", safeName);
-  if (!absPath) {
-    return NextResponse.json({ ok: false, error: "Invalid upload path" }, { status: 400 });
-  }
-  await writeFile(absPath, buffer);
-
-  const publicUrl = `/uploads/contact/${safeName}`;
-  const asset = await prisma.mediaAsset.create({
-    data: {
-      url: publicUrl,
-      fileName: file.name.slice(0, 200),
-      mimeType: detected.mimeType,
-      sizeBytes: buffer.length,
+  try {
+    const stored = await storePublicFile({
+      buffer,
+      extension: detected.extension,
+      contentType: detected.mimeType,
       folder: "contact",
-    },
-  });
+    });
 
-  return NextResponse.json({
-    ok: true,
-    data: { url: asset.url, id: asset.id, sizeBytes: asset.sizeBytes },
-  });
+    const asset = await prisma.mediaAsset.create({
+      data: {
+        url: stored.url,
+        fileName: file.name.slice(0, 200),
+        mimeType: detected.mimeType,
+        sizeBytes: buffer.length,
+        folder: "contact",
+      },
+    });
+
+    return NextResponse.json({
+      ok: true,
+      data: { url: asset.url, id: asset.id, sizeBytes: asset.sizeBytes },
+    });
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Could not save file";
+    return NextResponse.json({ ok: false, error: message }, { status: 500 });
+  }
 }

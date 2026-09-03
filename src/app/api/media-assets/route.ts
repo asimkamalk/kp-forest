@@ -9,9 +9,10 @@ export async function GET() {
   }
 
   const data = await prisma.mediaAsset.findMany({
+    where: { mimeType: { startsWith: "image/" } },
     orderBy: { createdAt: "desc" },
     take: 100,
-    select: { id: true, url: true, fileName: true },
+    select: { id: true, url: true, fileName: true, mimeType: true },
   });
 
   return NextResponse.json({ ok: true, data });

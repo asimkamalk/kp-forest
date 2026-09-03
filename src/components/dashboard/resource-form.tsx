@@ -181,7 +181,13 @@ export function ResourceForm<T extends FieldValues>({
                     <>
                       {field.render?.({
                         value: rhf.value,
-                        onChange: rhf.onChange,
+                        onChange: (value) => {
+                          rhf.onChange(value);
+                          setValue(field.name, value as never, {
+                            shouldDirty: true,
+                            shouldValidate: true,
+                          });
+                        },
                         error,
                         setValue: (name, value) =>
                           setValue(name, value as never, { shouldDirty: true }),
