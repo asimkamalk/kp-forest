@@ -7,7 +7,10 @@ import { DashboardToaster } from "@/components/dashboard/toaster";
 
 async function signOutAction() {
   "use server";
-  await signOut({ redirectTo: "/login" });
+  // Clear the session without Auth.js building an absolute URL from AUTH_URL
+  // (that env is still localhost on some deploys and sends users off-site).
+  await signOut({ redirect: false });
+  redirect("/login");
 }
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
