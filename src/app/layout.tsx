@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { Fraunces, Public_Sans, IBM_Plex_Mono, Noto_Nastaliq_Urdu } from "next/font/google";
 import { getSiteSettings } from "@/lib/data/site";
+import { resolveSiteIconUrl } from "@/lib/site-icon";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -20,17 +22,12 @@ const nastaliq = Noto_Nastaliq_Urdu({
 });
 
 export async function generateMetadata(): Promise<Metadata> {
+  await connection();
   const settings = await getSiteSettings();
-  const icon = settings.faviconUrl || settings.emblemUrl || settings.logoUrl;
-  const base = (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
-  const absIcon = icon
-    ? icon.startsWith("http")
-      ? icon
-      : `${base}${icon.startsWith("/") ? icon : `/${icon}`}`
-    : undefined;
+  const icon = resolveSiteIconUrl(settings);
 
   return {
-    metadataBase: new URL(base),
+    metadataBase: new URL(process.env.APP_URL ?? "http://localhost:3000"),
     title: {
       default: settings.siteName,
       template: `%s | ${settings.siteName}`,
@@ -38,23 +35,34 @@ export async function generateMetadata(): Promise<Metadata> {
     description:
       settings.tagline ??
       "Official portal of the Forest Department, Government of Khyber Pakhtunkhwa",
-    icons: absIcon
+    icons: icon
       ? {
-          icon: [{ url: absIcon }],
-          shortcut: [{ url: absIcon }],
-          apple: [{ url: absIcon }],
+          icon: [{ url: icon }, { url: "/icon", type: "image/png", sizes: "64x64" }],
+          shortcut: [{ url: icon }],
+          apple: [{ url: icon }],
         }
-      : undefined,
+      : {
+          icon: [{ url: "/icon", type: "image/png", sizes: "64x64" }],
+        },
   };
 }
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  await connection();
+  const settings = await getSiteSettings();
+  const icon = resolveSiteIconUrl(settings);
+
   return (
     <html
       lang="en"
       className={`${fraunces.variable} ${publicSans.variable} ${plexMono.variable} ${nastaliq.variable} h-full antialiased`}
       suppressHydrationWarning
     >
+      <head>
+        <link rel="icon" href={icon ?? "/icon"} />
+        <link rel="shortcut icon" href={icon ?? "/icon"} />
+        <link rel="apple-touch-icon" href={icon ?? "/icon"} />
+      </head>
       <body
         className="min-h-full flex flex-col bg-paper text-bark"
         suppressHydrationWarning

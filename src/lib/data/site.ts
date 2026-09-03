@@ -872,7 +872,7 @@ export const getSiteSettings = unstable_cache(
     return prisma.siteSetting.create({ data: { id: "singleton" } });
   },
   ["site-settings"],
-  { tags: ["settings"], revalidate: 3600 }
+  { tags: ["settings"], revalidate: 60 }
 );
 
 /* --------------------------------- PAGES -------------------------------- */
