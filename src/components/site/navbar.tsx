@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, Menu, Phone, X } from "lucide-react";
+import { BrandLogo } from "@/components/site/brand-logo";
 import type { NavNode } from "@/lib/data/site";
 import { useHydratedReducedMotion } from "@/lib/use-hydrated-reduced-motion";
 
@@ -126,14 +126,7 @@ export function Navbar({
           <div className="flex items-center justify-between gap-4">
             <Link href="/" className="flex min-w-0 shrink items-center gap-3 py-3">
               {brandSrc ? (
-                <Image
-                  src={brandSrc}
-                  alt={siteName}
-                  width={48}
-                  height={48}
-                  className="h-11 w-11 shrink-0 object-contain"
-                  style={{ boxShadow: "inset 0 0 0 1px var(--color-mist)" }}
-                />
+                <BrandLogo src={brandSrc} alt="" size={44} className="h-11 w-11" />
               ) : (
                 <div
                   className="grid h-11 w-11 shrink-0 place-items-center rounded-[8px] bg-deodar font-mono text-sm font-medium text-paper"

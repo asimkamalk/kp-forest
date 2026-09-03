@@ -6,13 +6,16 @@ import { useState } from "react";
 import { ChevronLeft, ChevronRight, TreePine } from "lucide-react";
 import type { Role } from "@prisma/client";
 import { filterNavForRole } from "@/components/dashboard/nav-config";
+import { BrandLogo } from "@/components/site/brand-logo";
 import { cn } from "@/lib/utils";
 
 type Props = {
   role: Role;
+  siteName: string;
+  logoSrc?: string | null;
 };
 
-export function DashboardSidebar({ role }: Props) {
+export function DashboardSidebar({ role, siteName, logoSrc }: Props) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const groups = filterNavForRole(role);
@@ -25,15 +28,25 @@ export function DashboardSidebar({ role }: Props) {
       )}
     >
       <div className="flex h-14 items-center gap-2 border-b border-deodar/50 px-3">
-        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-[8px] bg-deodar text-paper">
-          <TreePine className="h-4 w-4" aria-hidden />
-        </div>
-        {!collapsed && (
-          <div className="min-w-0 leading-tight">
-            <p className="truncate text-sm font-semibold text-paper">KP Forest</p>
-            <p className="eyebrow truncate text-[10px] text-moss">Dashboard</p>
-          </div>
-        )}
+        <Link
+          href="/dashboard"
+          className="flex min-w-0 items-center gap-2"
+          title={siteName}
+        >
+          {logoSrc ? (
+            <BrandLogo src={logoSrc} alt="" size={36} className="h-9 w-9" />
+          ) : (
+            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-[8px] bg-deodar text-paper">
+              <TreePine className="h-4 w-4" aria-hidden />
+            </div>
+          )}
+          {!collapsed && (
+            <div className="min-w-0 leading-tight">
+              <p className="truncate text-sm font-semibold text-paper">KP Forest</p>
+              <p className="eyebrow truncate text-[10px] text-resin">Dashboard</p>
+            </div>
+          )}
+        </Link>
       </div>
 
       <nav

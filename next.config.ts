@@ -50,6 +50,11 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async rewrites() {
+    return [
+      { source: "/favicon.ico", destination: "/icon" },
+    ];
+  },
   async redirects() {
     return [
       // Tabbed sections already have list UIs at their first child — send parents there.

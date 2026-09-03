@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidateTag } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { Role } from "@prisma/client";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -59,7 +59,8 @@ export async function updateSiteSettings(
       },
     });
     await writeAudit(session.user.id, "UPDATE", before, row);
-    revalidateTag("settings", "max");
+    updateTag("settings");
+    revalidatePath("/", "layout");
     return actionOk({ id: row.id });
   } catch (e) {
     return actionError(e instanceof Error ? e.message : "Could not save settings");

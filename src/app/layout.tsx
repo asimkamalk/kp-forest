@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Fraunces, Public_Sans, IBM_Plex_Mono, Noto_Nastaliq_Urdu } from "next/font/google";
+import { getSiteSettings } from "@/lib/data/site";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -18,11 +19,34 @@ const nastaliq = Noto_Nastaliq_Urdu({
   preload: false,
 });
 
-export const metadata: Metadata = {
-  metadataBase: new URL(process.env.APP_URL ?? "http://localhost:3000"),
-  title: "Forest Department, Khyber Pakhtunkhwa",
-  description: "Official portal of the Forest Department, Government of Khyber Pakhtunkhwa",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSiteSettings();
+  const icon = settings.faviconUrl || settings.emblemUrl || settings.logoUrl;
+  const base = (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
+  const absIcon = icon
+    ? icon.startsWith("http")
+      ? icon
+      : `${base}${icon.startsWith("/") ? icon : `/${icon}`}`
+    : undefined;
+
+  return {
+    metadataBase: new URL(base),
+    title: {
+      default: settings.siteName,
+      template: `%s | ${settings.siteName}`,
+    },
+    description:
+      settings.tagline ??
+      "Official portal of the Forest Department, Government of Khyber Pakhtunkhwa",
+    icons: absIcon
+      ? {
+          icon: [{ url: absIcon }],
+          shortcut: [{ url: absIcon }],
+          apple: [{ url: absIcon }],
+        }
+      : undefined,
+  };
+}
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (

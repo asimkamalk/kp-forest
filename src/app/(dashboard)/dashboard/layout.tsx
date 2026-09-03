@@ -4,6 +4,7 @@ import { auth, requireRole, signOut } from "@/lib/auth";
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { DashboardToaster } from "@/components/dashboard/toaster";
+import { getSiteSettings } from "@/lib/data/site";
 
 async function signOutAction() {
   "use server";
@@ -22,9 +23,16 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   // Layout gate — every page still calls requireRole() for its own roles.
   await requireRole();
 
+  const settings = await getSiteSettings();
+  const logoSrc = settings.emblemUrl || settings.logoUrl;
+
   return (
     <div className="flex min-h-screen bg-paper text-bark">
-      <DashboardSidebar role={session.user.role} />
+      <DashboardSidebar
+        role={session.user.role}
+        siteName={settings.siteName}
+        logoSrc={logoSrc}
+      />
       <div className="flex min-w-0 flex-1 flex-col">
         <DashboardTopbar
           userName={session.user.name ?? "User"}

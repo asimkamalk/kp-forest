@@ -1,6 +1,6 @@
 import Link from "next/link";
-import Image from "next/image";
 import { Mail, MapPin, Phone } from "lucide-react";
+import { BrandLogo } from "@/components/site/brand-logo";
 import type { NavNode } from "@/lib/data/site";
 import { getRegions } from "@/lib/data/site";
 
@@ -56,17 +56,15 @@ export async function Footer({ settings, nav }: Props) {
         <div>
           <div className="flex items-start gap-3">
             {brandSrc ? (
-              <Image
+              <BrandLogo
                 src={brandSrc}
-                alt={settings.siteName}
-                width={48}
-                height={48}
-                className="h-12 w-12 object-contain"
-                style={{ boxShadow: "inset 0 0 0 1px var(--color-mist)" }}
+                alt=""
+                size={56}
+                className="h-14 w-14"
               />
             ) : (
               <div
-                className="grid h-12 w-12 place-items-center rounded-[8px] bg-deodar font-mono text-sm font-medium text-paper"
+                className="grid h-14 w-14 place-items-center rounded-[8px] bg-deodar font-mono text-sm font-medium text-paper"
                 aria-hidden
               >
                 KP
